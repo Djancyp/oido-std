@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.env
+dev.db
+/lib/generated/prisma
+*.log
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
