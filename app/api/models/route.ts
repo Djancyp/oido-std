@@ -12,9 +12,9 @@ export async function GET() {
     if (!oido) throw new Error('OIDO_PATH is not defined');
 
     const stdout = await runCmd(`${oido} models list --json`);
-    const models: ModelResponse[] = JSON.parse(stdout);
+    const models: ModelResponse = JSON.parse(stdout);
 
-    return NextResponse.json<ModelResponse[]>(models);
+    return NextResponse.json<ModelResponse>(models);
   } catch (err: any) {
     console.error('Error in GET /api/models:', err);
     return NextResponse.json({ error: err.message || 'Failed to fetch models' }, { status: 500 });

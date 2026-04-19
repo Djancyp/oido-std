@@ -1,23 +1,14 @@
 'use client';
 
-import { SidebarGroup, SidebarGroupAction, SidebarGroupLabel } from '@/components/ui/sidebar';
-import { BotMessageSquare, ChevronDown, ChevronRight, Plus, Bot } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { SidebarGroup, SidebarGroupLabel } from '@/components/ui/sidebar';
+import { ChevronDown, ChevronRight, Plus, Bot, Loader2 } from 'lucide-react';
 import { AgentDropdown } from './agent_dropdown';
-import { useAgents, useCreateAgent, useDeleteAgent, useUpdateAgent } from '@/hooks/useAgents';
 import { useModal } from '@/contexts/Modal';
-
-/* =========================
-   Types
-========================= */
-export type Agent = {
-  agent_id: string;
-  agent_name: string;
-  tab_ids: string[];
-  exclude_tools: string[];
-  skills: string[];
-  subagents: Agent[];
-};
+import { useAgents } from '@/contexts/Agents';
+import { useCreateAgentMutation, useDeleteAgentMutation } from '@/hooks/useAgents';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 /* =========================
    Memoized Item
@@ -28,25 +19,38 @@ const AgentItem = React.memo(
     depth = 0,
     onAdd,
     onEdit,
-    onDelete
+    onDelete,
+    isSelected,
+    onSelect,
+    tabs,
+    onCreateTab,
+    onTabSelect,
+    selectedTab,
   }: {
-    agent: Agent;
+    agent: any; // Using the type from your context
     depth?: number;
     onAdd: (parentId: string) => void;
     onEdit: (agentId: string) => void;
     onDelete: (agentId: string) => void;
+    isSelected: boolean;
+    onSelect: (agentId: string) => void;
+    tabs: any[]; // Array of tabs for this agent
+    onCreateTab: (agentId: string) => void;
+    onTabSelect: (tabId: string) => void;
+    selectedTab: any; // The currently selected tab
   }) => {
     const [open, setOpen] = useState(true);
-
-    // We strictly limit depth to 0 for adding sub-agents
-    const canHaveSubAgents = depth === 0;
     const hasChildren = !!(agent.subagents && agent.subagents.length > 0);
+    const agentTabs = tabs.filter((tab: any) => tab.agentId === agent.agent_id);
 
     return (
       <div className="select-none">
         <div
-          className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded-md px-2"
+          className={`flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded-md px-2 ${
+            isSelected ? 'bg-sidebar-accent' : ''
+          }`}
           style={{ paddingLeft: depth * 12 + 8 }}
+          onClick={() => onSelect(agent.agent_id)}
         >
           <div className="flex items-center w-4">
             {hasChildren && (
@@ -62,20 +66,13 @@ const AgentItem = React.memo(
             )}
           </div>
 
-            <Bot
-              size={16}
-              className={
-                depth === 0
-                  ? 'text-black'
-                  : 'text-slate-800'
-              }
-            />
-          <span className={`text-sm text-slate-900`}>{agent.agent_name}</span>
+          <Bot size={16} className={depth === 0 ? 'text-black' : 'text-slate-600'} />
+          <span className="text-sm text-slate-900 truncate">{agent.agent_name}</span>
 
-          <div className="ml-auto">
-            <AgentDropdown 
-              agentType="agent" 
-              agentId={agent.agent_id} 
+          <div className="ml-auto opacity-0 group-hover:opacity-100">
+            <AgentDropdown
+              agentType="agent"
+              agentId={agent.agent_id}
               onAddSubAgent={onAdd}
               onEditAgent={onEdit}
               onDeleteAgent={onDelete}
@@ -83,16 +80,56 @@ const AgentItem = React.memo(
           </div>
         </div>
 
+        {/* Render agent tabs */}
+        {open && agentTabs.length > 0 && (
+          <div className="ml-4 pl-2 border-l border-slate-200">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+              <span>Tabs</span>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateTab(agent.agent_id);
+                }}
+                className="p-0.5 rounded hover:bg-sidebar-accent"
+              >
+                <Plus size={10} />
+              </button>
+            </div>
+            <div className="space-y-1">
+              {agentTabs.map((tab: any) => (
+                <div
+                  key={tab.id}
+                  className={`flex items-center gap-2 py-1 px-2 rounded text-xs cursor-pointer hover:bg-sidebar-accent ${
+                    selectedTab?.id === tab.id ? 'bg-sidebar-accent' : ''
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTabSelect(tab.id);
+                  }}
+                >
+                  <span className="truncate">{tab.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {open && hasChildren && (
           <div className="flex flex-col">
-            {agent.subagents!.map(child => (
-              <AgentItem 
-                key={child.agent_id} 
-                agent={child} 
-                depth={depth + 1} 
+            {agent.subagents.map((child: any) => (
+              <AgentItem
+                key={child.agent_id}
+                agent={child}
+                depth={depth + 1}
                 onAdd={onAdd}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                isSelected={isSelected}
+                onSelect={onSelect}
+                tabs={tabs}
+                onCreateTab={onCreateTab}
+                onTabSelect={onTabSelect}
+                selectedTab={selectedTab}
               />
             ))}
           </div>
@@ -109,92 +146,94 @@ AgentItem.displayName = 'AgentItem';
 ========================= */
 
 export function AgentsApi() {
-  const { data: agents, isLoading, isError, error } = useAgents();
-  const createAgent = useCreateAgent();
-  const deleteAgent = useDeleteAgent();
-  const updateAgent = useUpdateAgent();
-  const { openModal } = useModal();
+  const { agents, isLoading, isError, selectedAgent, selectAgent, selectedTab, getTabsForAgent, createTab, selectTab } = useAgents();
+  const { openModal, closeModal } = useModal();
 
-  // Handle adding a sub-agent (stub implementation)
-  const handleAddSubAgent = (parentId: string) => {
-    // For now, we'll just log to console - in a real implementation
-    // this would make an API call to add a subagent
-    console.log(`Adding subagent to parent agent: ${parentId}`);
-  };
+  // Mutations
+  const createMutation = useCreateAgentMutation();
+  const deleteMutation = useDeleteAgentMutation();
 
-  // Handle creating a new root agent with modal
+  // Select first agent on load if available
+  useEffect(() => {
+    if (agents && agents.length > 0 && !selectedAgent) {
+      selectAgent(agents[0].agent_id);
+    }
+  }, [agents, selectedAgent, selectAgent]);
+
   const handleAddRootAgent = () => {
+    let agentName = ''; // Local variable to track input
+
     openModal({
       title: 'Create New Agent',
       description: 'Enter a name for your new agent',
       content: (
-        <div className="space-y-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="agent-name" className="text-right text-sm font-medium">
-              Name
-            </label>
-            <input
-              id="agent-name"
-              type="text"
-              className="col-span-3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter agent name"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const input = e.target as HTMLInputElement;
-                  if (input.value.trim()) {
-                    createAgent.mutate(input.value.trim());
-                  }
-                }
-              }}
-            />
-          </div>
+        <div className="py-4">
+          <Input
+            autoFocus
+            placeholder="Agent name..."
+            onChange={e => (agentName = e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                createMutation.mutate(agentName);
+                closeModal();
+              }
+            }}
+          />
         </div>
       ),
       footer: (
-        <div className="flex justify-end space-x-2">
-          <button
-            type="button"
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            onClick={() => {}}
-          >
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={closeModal}>
             Cancel
-          </button>
-          <button
-            type="button"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            onClick={(e) => {
-              const input = e.currentTarget.parentElement?.previousElementSibling?.querySelector('input') as HTMLInputElement;
-              if (input?.value.trim()) {
-                createAgent.mutate(input.value.trim());
+          </Button>
+          <Button
+            onClick={() => {
+              if (agentName.trim()) {
+                createMutation.mutate(agentName.trim());
+                closeModal();
               }
             }}
           >
             Create
-          </button>
+          </Button>
         </div>
       ),
     });
   };
 
-  // Handle editing an agent (stub implementation)
-  const handleEditAgent = (agentId: string) => {
-    // For now, we'll just show an alert - in a real implementation, 
-    // this would open a modal or redirect to an edit page
-    alert(`Editing agent with ID: ${agentId}`);
+  const handleAddSubAgent = (parentId: string) => {
+    console.log(`Adding subagent to: ${parentId}`);
+    // Future: implement subagent creation mutation here
   };
 
-  // Handle deleting an agent
+  const handleEditAgent = (agentId: string) => {
+    alert(`Editing: ${agentId}`);
+  };
+
   const handleDeleteAgent = (agentId: string) => {
-    deleteAgent.mutate(agentId);
+    if (confirm('Are you sure you want to remove this agent?')) {
+      deleteMutation.mutate(agentId);
+    }
+  };
+
+  const handleSelectAgent = (agentId: string) => {
+    selectAgent(agentId);
+  };
+
+  const handleCreateTab = (agentId: string) => {
+    createTab(agentId);
+  };
+
+  const handleSelectTab = (tabId: string) => {
+    selectTab(tabId);
   };
 
   if (isLoading) {
     return (
       <SidebarGroup>
-        <SidebarGroupLabel className="flex items-center justify-between px-2 mb-2">
-          <span className="text-sm font-bold uppercase tracking-wider text-black">Agents</span>
-        </SidebarGroupLabel>
-        <div className="px-2 py-2 text-sm text-gray-500">Loading agents...</div>
+        <div className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground">
+          <Loader2 size={14} className="animate-spin" /> Loading...
+        </div>
       </SidebarGroup>
     );
   }
@@ -202,10 +241,7 @@ export function AgentsApi() {
   if (isError) {
     return (
       <SidebarGroup>
-        <SidebarGroupLabel className="flex items-center justify-between px-2 mb-2">
-          <span className="text-sm font-bold uppercase tracking-wider text-black">Agents</span>
-        </SidebarGroupLabel>
-        <div className="px-2 py-2 text-sm text-red-500">Error loading agents: {(error as Error).message}</div>
+        <div className="px-4 py-2 text-sm text-destructive">Failed to load agents.</div>
       </SidebarGroup>
     );
   }
@@ -213,28 +249,42 @@ export function AgentsApi() {
   return (
     <SidebarGroup>
       <SidebarGroupLabel className="flex items-center justify-between px-2 mb-2">
-        <span className="text-sm font-bold uppercase tracking-wider text-black">Agents</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Agents</span>
         <button
           onClick={handleAddRootAgent}
-          disabled={createAgent.isPending || isLoading}
-          className="p-1.5 hover:bg-sidebar-accent rounded-full transition-colors border border-transparent active:border-slate-200 disabled:opacity-50"
-          title="Add Root Agent"
+          disabled={createMutation.isPending}
+          className="p-1 hover:bg-sidebar-accent rounded-md transition-colors"
         >
-          <Plus size={16} />
+          {createMutation.isPending ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Plus size={14} />
+          )}
         </button>
       </SidebarGroupLabel>
 
-      <div className="space-y-1">
-        {agents?.map(agent => (
-          <AgentItem 
-            key={agent.agent_id} 
-            agent={agent} 
-            onAdd={handleAddSubAgent}
-            onEdit={handleEditAgent}
-            onDelete={handleDeleteAgent}
-          />
-        ))}
+      <div className="space-y-0.5">
+        {agents && agents.length > 0 ? (
+          agents.map(agent => (
+            <AgentItem
+              key={agent.agent_id}
+              agent={agent}
+              onAdd={handleAddSubAgent}
+              onEdit={handleEditAgent}
+              onDelete={handleDeleteAgent}
+              isSelected={selectedAgent?.agent_id === agent.agent_id}
+              onSelect={handleSelectAgent}
+              tabs={getTabsForAgent(agent.agent_id)}
+              onCreateTab={handleCreateTab}
+              onTabSelect={handleSelectTab}
+              selectedTab={selectedTab}
+            />
+          ))
+        ) : (
+          <div className="px-4 py-2 text-xs text-muted-foreground italic">No agents found.</div>
+        )}
       </div>
     </SidebarGroup>
   );
 }
+

@@ -9,7 +9,11 @@ type TabProps = {
   removeTab: (id: string, e: React.MouseEvent) => void;
   addNewTab: () => void;
   activeTab: string;
-  setActiveTab: (id: string) => void; 
+  setActiveTab: (id: string) => void;
+  agentInfo?: {
+    name: string;
+    model: string;
+  };
 };
 
 function TopBar({
@@ -18,6 +22,7 @@ function TopBar({
   addNewTab,
   activeTab,
   setActiveTab,
+  agentInfo,
 }: TabProps) {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -59,6 +64,15 @@ function TopBar({
             <Plus className="h-4 w-4" />
           </Button>
         </div>
+        
+        {/* Agent Info Display */}
+        {agentInfo && (
+          <div className="flex items-center gap-2 px-3 py-1.5 text-xs bg-slate-100 rounded-md ml-2">
+            <span className="font-medium">{agentInfo.name}</span>
+            <span className="text-muted-foreground">•</span>
+            <span className="text-muted-foreground">{agentInfo.model}</span>
+          </div>
+        )}
       </div>
     </Tabs>
   );

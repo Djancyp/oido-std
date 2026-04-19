@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import * as pty from 'node-pty';
+import { waiters } from '@/lib/waiters';
 
 export const runtime = 'nodejs';
 
@@ -14,6 +15,8 @@ type ChatRequest = {
   continue?: boolean;
   approvalMode?: 'yolo' | 'auto-edit' | 'plan';
 };
+
+const IDLE_TIMEOUT_MS = 120_000;
 
 export async function POST(req: NextRequest) {
   const body: ChatRequest = await req.json();
@@ -57,12 +60,13 @@ export async function POST(req: NextRequest) {
       if (body.approvalMode === 'auto-edit') args.push('--approval-mode', 'auto-edit');
       if (body.approvalMode === 'plan') args.push('--approval-mode', 'plan');
 
-      args.push('-m', body.model ?? 'openrouter/free');
+      if (!body.model) body.model = 'openrouter/free';
+      args.push('-m', body.model);
       if (body.systemPrompt) args.push('--system-prompt', body.systemPrompt);
 
       const child = pty.spawn('/home/djan/Documents/codding/agent-cli/oido-cli/oido', args, {
         name: 'xterm-256color',
-        cols: 10000, // ← very wide: prevents line-wrapping of long JSON
+        cols: 10000,
         rows: 50,
         env: {
           ...(process.env as Record<string, string>),
@@ -70,88 +74,35 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      console.log('[DEBUG] Spawned pty PID:', child.pid);
+      let idleTimer: ReturnType<typeof setTimeout>;
 
-      const hardTimeout = setTimeout(() => {
-        console.warn('[DEBUG] Hard 30s timeout');
-        send({ type: 'error', message: 'Timeout: no response from oido' });
-        safeClose();
-        child.kill();
-      }, 30_000);
+      const resetIdleTimer = () => {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+          console.warn(`[stream] idle for ${IDLE_TIMEOUT_MS}ms — killing`);
+          send({ type: 'error', message: `No activity for ${IDLE_TIMEOUT_MS / 1000}s` });
+          safeClose();
+          child.kill();
+        }, IDLE_TIMEOUT_MS);
+      };
 
+      resetIdleTimer();
+
+      const pendingToolCalls = new Map<string, { name: string; input: any }>();
       let lineBuffer = '';
-      let rawLog = ''; // ← accumulate everything for diagnosis
 
-      child.onData((raw: string) => {
-        // Log the raw bytes (hex) so we can see exactly what the PTY sends
-        const hex = Buffer.from(raw).toString('hex');
-        console.log('[RAW hex]', hex);
-        console.log('[RAW str]', JSON.stringify(raw)); // shows \r, \n, escapes
-
-        rawLog += raw;
-
-        const cleaned = raw
-          .replace(/\r\n/g, '\n')
-          .replace(/\r/g, '\n')
-          .replace(/\x1B\[[0-9;]*[A-Za-z]/g, '')
-          .replace(/\x1B\][^\x07]*(\x07|\x1B\\)/g, '')
-          // Strip any remaining ESC sequences
-          .replace(/\x1B[@-Z\\-_]/g, '')
-          .replace(/\x1B\[[\x00-\x7F]*?[A-Za-z]/g, '');
-
-        lineBuffer += cleaned;
-        const lines = lineBuffer.split('\n');
-        lineBuffer = lines.pop() ?? '';
-
-        console.log('[DEBUG] lineBuffer after chunk, pending:', JSON.stringify(lineBuffer));
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-          console.log(
-            '[DEBUG] Attempting parse, length:',
-            trimmed.length,
-            'preview:',
-            trimmed.slice(0, 120)
-          );
-          try {
-            handleMessage(JSON.parse(trimmed));
-          } catch (e) {
-            console.warn('[DEBUG] JSON parse failed:', (e as Error).message);
-            console.warn('[DEBUG] Failed line (first 300 chars):', trimmed.slice(0, 300));
-            console.warn('[DEBUG] Failed line (last 100 chars):', trimmed.slice(-100));
-          }
-        }
-      });
-
-      child.onExit(({ exitCode, signal }: { exitCode: number; signal?: number }) => {
-        console.log('[DEBUG] pty exited — code:', exitCode, 'signal:', signal);
-        console.log('[DEBUG] Pending lineBuffer at exit:', JSON.stringify(lineBuffer));
-        clearTimeout(hardTimeout);
-
-        // Flush remaining buffer
-        const remaining = lineBuffer.trim();
-        if (remaining) {
-          console.log('[DEBUG] Flushing remaining buffer, length:', remaining.length);
-          try {
-            handleMessage(JSON.parse(remaining));
-          } catch (e) {
-            console.warn('[DEBUG] Could not parse remaining buffer:', (e as Error).message);
-            console.warn('[DEBUG] Buffer content:', remaining.slice(0, 500));
-          }
-        }
-
-        if (!isClosed) send({ type: 'done', conversation_id: conversationId });
-        safeClose();
-      });
-
-      function handleMessage(msg: any) {
-        console.log('[DEBUG] handleMessage type:', msg.type, 'subtype:', msg.subtype ?? '-');
-
+      async function handleMessage(msg: any) {
         switch (msg.type) {
           case 'system':
-            if (msg.subtype === 'init' && msg.session_id) {
-              send({ type: 'session_init', session_id: msg.session_id });
+            if (msg.subtype === 'init') {
+              send({
+                type: 'session_init',
+                session_id: msg.session_id,
+                agents: msg.agents ?? [],
+                tools: msg.tools ?? [],
+                model: msg.model,
+                permission_mode: msg.permission_mode,
+              });
             }
             break;
 
@@ -166,34 +117,164 @@ export async function POST(req: NextRequest) {
 
           case 'assistant': {
             if (!msg.message) break;
-            for (const c of msg.message.content ?? []) {
-              if (c.type === 'thinking') send({ type: 'thinking', content: c.thinking });
-              if (c.type === 'text' && c.text.trim() !== '') send({ type: 'text', content: c.text });
-              if (c.type === 'tool_use')
-                send({ type: 'tool_use', name: c.name, id: c.id, input: c.input });
+            const content: any[] = msg.message.content ?? [];
+
+            // Flush completed tool calls (skip ask_user_question — handled separately)
+            if (pendingToolCalls.size > 0) {
+              for (const [id, { name }] of pendingToolCalls) {
+                if (name !== 'ask_user_question') {
+                  send({ type: 'tool_result', id, name });
+                }
+              }
+              pendingToolCalls.clear();
+            }
+
+            for (const c of content) {
+              if (c.type === 'thinking' && c.thinking) {
+                send({ type: 'thinking', content: c.thinking });
+              }
+              if (c.type === 'text' && c.text?.trim()) {
+                send({ type: 'text', content: c.text });
+              }
+              if (c.type === 'tool_use') {
+                pendingToolCalls.set(c.id, { name: c.name, input: c.input });
+                if (c.name !== 'ask_user_question') {
+                  send({ type: 'tool_use', id: c.id, name: c.name, input: c.input });
+                }
+              }
             }
             break;
           }
 
-          case 'ask_user_question':
+          case 'ask_user_question': {
+            // Priority order for question text:
+            // 1. msg.message.content[].type === 'question'  (richest, has header + options)
+            // 2. pending tool call input.question           (fallback)
+            // 3. msg.question                               (legacy fallback)
+            const questionBlock = (msg.message?.content ?? []).find(
+              (c: any) => c.type === 'question'
+            );
+
+            let question = questionBlock?.question ?? '';
+            let header = questionBlock?.header ?? '';
+            let options: string[] | null = questionBlock?.options ?? null;
+
+            // Fallback to tool input if message block had no text
+            if (!question) {
+              for (const [, { name, input }] of pendingToolCalls) {
+                if (name === 'ask_user_question' && input?.question) {
+                  question = input.question;
+                  break;
+                }
+              }
+            }
+
+            // Last resort fallback
+            if (!question) question = msg.question ?? '';
+
             send({
               type: 'ask_user_question',
-              question: msg.question ?? '',
+              question,
+              header,
+              options, // null = free text; string[] = multiple choice
               session_id: msg.session_id,
             });
+
+            clearTimeout(idleTimer);
+
+            const answer = await new Promise<string>((resolve, reject) => {
+              waiters.set(conversationId, { resolve, reject });
+              setTimeout(
+                () => {
+                  if (waiters.has(conversationId)) {
+                    waiters.delete(conversationId);
+                    reject('question timed out');
+                  }
+                },
+                5 * 60 * 1000
+              );
+            }).catch(reason => {
+              send({ type: 'error', message: String(reason) });
+              safeClose();
+              child.kill();
+              return null;
+            });
+
+            if (answer !== null) {
+              child.write(answer + '\n');
+              resetIdleTimer();
+            }
             break;
+          }
 
           case 'result':
-            clearTimeout(hardTimeout);
-            send({ type: 'done', conversation_id: conversationId });
+            for (const [id, { name }] of pendingToolCalls) {
+              if (name !== 'ask_user_question') {
+                send({ type: 'tool_result', id, name });
+              }
+            }
+            pendingToolCalls.clear();
+            clearTimeout(idleTimer);
+            send({
+              type: 'done',
+              conversation_id: conversationId,
+              is_error: msg.is_error ?? false,
+              num_turns: msg.num_turns ?? 0,
+              duration_ms: msg.duration_ms ?? 0,
+            });
             safeClose();
             child.kill();
             break;
 
           default:
-            console.log('[DEBUG] Unhandled message type:', msg.type);
+            console.log('[stream] unhandled type:', msg.type);
         }
       }
+
+      child.onData((raw: string) => {
+        resetIdleTimer();
+
+        const cleaned = raw
+          .replace(/\r\n/g, '\n')
+          .replace(/\r/g, '\n')
+          .replace(/\x1B\[[0-9;]*[A-Za-z]/g, '')
+          .replace(/\x1B\][^\x07]*(\x07|\x1B\\)/g, '')
+          .replace(/\x1B[@-Z\\-_]/g, '')
+          .replace(/\x1B\[[\x00-\x7F]*?[A-Za-z]/g, '');
+
+        lineBuffer += cleaned;
+        const lines = lineBuffer.split('\n');
+        lineBuffer = lines.pop() ?? '';
+
+        (async () => {
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+            try {
+              await handleMessage(JSON.parse(trimmed));
+            } catch (e) {
+              console.warn(
+                '[stream] parse fail:',
+                (e as Error).message,
+                '|',
+                trimmed.slice(0, 200)
+              );
+            }
+          }
+        })();
+      });
+
+      child.onExit(({ exitCode, signal }: { exitCode: number; signal?: number }) => {
+        clearTimeout(idleTimer);
+        const remaining = lineBuffer.trim();
+        if (remaining) {
+          try {
+            handleMessage(JSON.parse(remaining));
+          } catch {}
+        }
+        if (!isClosed) send({ type: 'done', conversation_id: conversationId });
+        safeClose();
+      });
     },
   });
 

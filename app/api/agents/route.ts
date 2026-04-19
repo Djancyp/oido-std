@@ -7,7 +7,7 @@ export async function runCmd(cmd: string) {
   const { exec } = await import('child_process');
   const { promisify } = await import('util');
   const execAsync = promisify(exec);
-  
+
   const { stdout } = await execAsync(cmd);
   return stdout;
 }
@@ -22,6 +22,7 @@ export type Agent = {
   exclude_tools: string[];
   skills: string[];
   subagents: Agent[];
+  system_prompt: string;
 };
 
 type CreateAgentBody = {
@@ -52,6 +53,10 @@ export async function GET() {
     if (!oido) throw new Error('OIDO_PATH is not defined');
 
     const stdout = await runCmd(`${oido} agents list --json`);
+		// check if its a text
+		// if (stdout.startsWith('')) {
+		// 	return NextResponse.json<Agent[]>([]);
+		// }
     const agents: Agent[] = JSON.parse(stdout);
 
     return NextResponse.json<Agent[]>(agents);
@@ -68,7 +73,7 @@ export async function POST(req: NextRequest) {
   try {
     const oido = process.env.OIDO_PATH;
     if (!oido) throw new Error('OIDO_PATH is not defined');
-    
+
     const body: CreateAgentBody = await req.json();
 
     if (!body.name) {
@@ -102,7 +107,7 @@ export async function PATCH(req: NextRequest) {
   try {
     const oido = process.env.OIDO_PATH;
     if (!oido) throw new Error('OIDO_PATH is not defined');
-    
+
     const body: UpdateAgentBody = await req.json();
 
     if (!body.name) {
@@ -144,7 +149,7 @@ export async function DELETE(req: NextRequest) {
   try {
     const oido = process.env.OIDO_PATH;
     if (!oido) throw new Error('OIDO_PATH is not defined');
-    
+
     const body: DeleteAgentBody = await req.json();
 
     if (!body.name) {
