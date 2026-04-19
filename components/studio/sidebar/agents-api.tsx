@@ -22,26 +22,17 @@ const AgentItem = React.memo(
     onDelete,
     isSelected,
     onSelect,
-    tabs,
-    onCreateTab,
-    onTabSelect,
-    selectedTab,
   }: {
-    agent: any; // Using the type from your context
+    agent: any;
     depth?: number;
     onAdd: (parentId: string) => void;
     onEdit: (agentId: string) => void;
     onDelete: (agentId: string) => void;
     isSelected: boolean;
     onSelect: (agentId: string) => void;
-    tabs: any[]; // Array of tabs for this agent
-    onCreateTab: (agentId: string) => void;
-    onTabSelect: (tabId: string) => void;
-    selectedTab: any; // The currently selected tab
   }) => {
     const [open, setOpen] = useState(true);
     const hasChildren = !!(agent.subagents && agent.subagents.length > 0);
-    const agentTabs = tabs.filter((tab: any) => tab.agentId === agent.agent_id);
 
     return (
       <div className="select-none">
@@ -80,40 +71,6 @@ const AgentItem = React.memo(
           </div>
         </div>
 
-        {/* Render agent tabs */}
-        {open && agentTabs.length > 0 && (
-          <div className="ml-4 pl-2 border-l border-slate-200">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-              <span>Tabs</span>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCreateTab(agent.agent_id);
-                }}
-                className="p-0.5 rounded hover:bg-sidebar-accent"
-              >
-                <Plus size={10} />
-              </button>
-            </div>
-            <div className="space-y-1">
-              {agentTabs.map((tab: any) => (
-                <div
-                  key={tab.id}
-                  className={`flex items-center gap-2 py-1 px-2 rounded text-xs cursor-pointer hover:bg-sidebar-accent ${
-                    selectedTab?.id === tab.id ? 'bg-sidebar-accent' : ''
-                  }`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onTabSelect(tab.id);
-                  }}
-                >
-                  <span className="truncate">{tab.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {open && hasChildren && (
           <div className="flex flex-col">
             {agent.subagents.map((child: any) => (
@@ -126,10 +83,6 @@ const AgentItem = React.memo(
                 onDelete={onDelete}
                 isSelected={isSelected}
                 onSelect={onSelect}
-                tabs={tabs}
-                onCreateTab={onCreateTab}
-                onTabSelect={onTabSelect}
-                selectedTab={selectedTab}
               />
             ))}
           </div>
@@ -146,7 +99,7 @@ AgentItem.displayName = 'AgentItem';
 ========================= */
 
 export function AgentsApi() {
-  const { agents, isLoading, isError, selectedAgent, selectAgent, selectedTab, getTabsForAgent, createTab, selectTab } = useAgents();
+  const { agents, isLoading, isError, selectedAgent, selectAgent } = useAgents();
   const { openModal, closeModal } = useModal();
 
   // Mutations
@@ -220,14 +173,6 @@ export function AgentsApi() {
     selectAgent(agentId);
   };
 
-  const handleCreateTab = (agentId: string) => {
-    createTab(agentId);
-  };
-
-  const handleSelectTab = (tabId: string) => {
-    selectTab(tabId);
-  };
-
   if (isLoading) {
     return (
       <SidebarGroup>
@@ -274,10 +219,6 @@ export function AgentsApi() {
               onDelete={handleDeleteAgent}
               isSelected={selectedAgent?.agent_id === agent.agent_id}
               onSelect={handleSelectAgent}
-              tabs={getTabsForAgent(agent.agent_id)}
-              onCreateTab={handleCreateTab}
-              onTabSelect={handleSelectTab}
-              selectedTab={selectedTab}
             />
           ))
         ) : (

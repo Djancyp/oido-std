@@ -11,7 +11,7 @@ import React, {
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Agent } from '@/app/api/agents/route';
-import { useAgentsQuery, agentKeys } from '@/hooks/useAgents';
+import { useAgentsQuery, agentKeys, RawSession, RawTabConversation } from '@/hooks/useAgents';
 
 type Tab = {
   id: string;
@@ -33,6 +33,7 @@ type AgentContextType = {
   deleteTab: (tabId: string) => void;
   getTabsForAgent: (agentId: string) => Tab[];
   loadTabsForAgent: (agentId: string) => Promise<Tab[]>;
+  initialConversation: RawTabConversation | null;
 };
 
 const AgentContext = createContext<AgentContextType | undefined>(undefined);
@@ -46,27 +47,56 @@ function makeTab(agentId: string, name = 'New Tab', id?: string): Tab {
   };
 }
 
+function sessionsToTabs(sessions: RawSession[]): Tab[] {
+  const seen = new Set<string>();
+  return sessions
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .filter(s => {
+      if (seen.has(s.tabId)) return false;
+      seen.add(s.tabId);
+      return true;
+    })
+    .map(s => ({
+      id: s.tabId,
+      name:
+        s.firstPrompt && s.firstPrompt.length > 20
+          ? `${s.firstPrompt.substring(0, 20)}...`
+          : s.firstPrompt || `Session ${s.id.substring(0, 8)}`,
+      agentId: s.agentId,
+      createdAt: new Date(s.updatedAt),
+    }));
+}
+
 export function AgentsProvider({
   children,
   initialAgents = [],
+  initialSessions = [],
+  initialConversation = null,
 }: {
   children: ReactNode;
   initialAgents?: Agent[];
+  initialSessions?: RawSession[];
+  initialConversation?: RawTabConversation | null;
 }) {
   const queryClient = useQueryClient();
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
-  const [selectedTab, setSelectedTab] = useState<Tab | null>(null);
-  const [tabs, setTabs] = useState<Tab[]>([]);
-  const loadedAgentIds = useRef<Set<string>>(new Set());
+  const initialTabs = sessionsToTabs(initialSessions);
+  const defaultAgent = initialAgents[0] ?? null;
+  const defaultTabId = defaultAgent?.tab_ids?.[0];
+  const defaultTab = defaultTabId
+    ? (initialTabs.find(t => t.id === defaultTabId) ??
+        makeTab(defaultAgent!.agent_id, 'Tab 1', defaultTabId))
+    : null;
 
-  useEffect(() => {
-    if (initialAgents.length > 0) {
-      queryClient.setQueryData(agentKeys.list(), initialAgents);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(defaultAgent);
+  const [selectedTab, setSelectedTab] = useState<Tab | null>(defaultTab);
+  const [tabs, setTabs] = useState<Tab[]>(initialTabs);
+  const loadedAgentIds = useRef<Set<string>>(
+    new Set(initialSessions.map(s => s.agentId))
+  );
 
-  const { data, isLoading, isError, refetch } = useAgentsQuery();
+  const { data, isLoading, isError, refetch } = useAgentsQuery({
+    initialData: initialAgents.length > 0 ? initialAgents : undefined,
+  });
 
   // ── Stable callbacks ────────────────────────────────────────────────────────
 
@@ -84,17 +114,26 @@ export function AgentsProvider({
       const json = await res.json();
 
       // Filter sessions for the specific agent and transform to our Tab type
-      const agentSessions = json.filter((session: any) => session.agentId === agentId);
-      
-      const agentTabs: Tab[] = agentSessions.map((session: any) => ({
-        id: session.tabId, // Use the tabId from the session as our tab ID
-        name: session.firstPrompt?.length > 20 
-          ? `${session.firstPrompt.substring(0, 20)}...` 
-          : session.firstPrompt || `Session ${session.id.substring(0, 8)}`,
-        agentId,
-        createdAt: new Date(session.updatedAt), // Use updatedAt as creation time approximation
-      }));
+      const agentSessions: any[] = json.filter((session: any) => session.agentId === agentId);
+      agentSessions.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
+      const seen = new Set<string>();
+      const agentTabs: Tab[] = agentSessions
+        .filter((session: any) => {
+          if (seen.has(session.tabId)) return false;
+          seen.add(session.tabId);
+          return true;
+        })
+        .map((session: any) => ({
+          id: session.tabId,
+          name: session.firstPrompt?.length > 20
+            ? `${session.firstPrompt.substring(0, 20)}...`
+            : session.firstPrompt || `Session ${session.id.substring(0, 8)}`,
+          agentId,
+          createdAt: new Date(session.updatedAt),
+        }));
+
+      console.log(`[tabs] loadTabsForAgent(${agentId}) resolved ${agentTabs.length} tabs:`, agentTabs.map(t => ({ id: t.id, name: t.name })));
       setTabs(prev => [...prev.filter(t => t.agentId !== agentId), ...agentTabs]);
       return agentTabs;
     } catch (err) {
@@ -139,7 +178,9 @@ export function AgentsProvider({
 
   const getTabsForAgent = useCallback(
     (agentId: string) => {
-      return tabs.filter(t => t.agentId === agentId);
+      const result = tabs.filter(t => t.agentId === agentId);
+      console.log(`[tabs] getTabsForAgent(${agentId}):`, result.map(t => ({ id: t.id, name: t.name })));
+      return result;
     },
     [tabs]
   );
@@ -156,19 +197,24 @@ export function AgentsProvider({
   // Seed tabs from agent.tab_ids and load full tab data
   useEffect(() => {
     if (!data) return;
+    console.log('[tabs] data agents:', data.map(a => ({ id: a.agent_id, tab_ids: a.tab_ids })));
+    console.log('[tabs] loadedAgentIds:', [...loadedAgentIds.current]);
+    console.log('[tabs] current tabs state:', tabs.map(t => ({ id: t.id, agentId: t.agentId, name: t.name })));
     for (const agent of data) {
-      if (loadedAgentIds.current.has(agent.agent_id)) continue;
+      if (loadedAgentIds.current.has(agent.agent_id)) {
+        console.log(`[tabs] skip agent ${agent.agent_id} (already loaded)`);
+        continue;
+      }
       loadedAgentIds.current.add(agent.agent_id);
 
-      // Immediately seed tabs from tab_ids so selection works before the fetch
       if (agent.tab_ids?.length > 0) {
         const seedTabs = agent.tab_ids.map((tid: string, i: number) =>
           makeTab(agent.agent_id, `Tab ${i + 1}`, tid)
         );
+        console.log(`[tabs] seeding ${seedTabs.length} tabs for agent ${agent.agent_id}:`, seedTabs.map(t => t.id));
         setTabs(prev => [...prev.filter(t => t.agentId !== agent.agent_id), ...seedTabs]);
       }
 
-      // Then fetch full metadata (names, timestamps, etc.)
       loadTabsForAgent(agent.agent_id);
     }
   }, [data, loadTabsForAgent]);
@@ -216,6 +262,7 @@ export function AgentsProvider({
         deleteTab,
         getTabsForAgent,
         loadTabsForAgent,
+        initialConversation,
       }}
     >
       {children}

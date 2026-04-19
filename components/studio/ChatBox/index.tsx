@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Send, User, Bot, Loader2, Wrench, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -264,87 +264,94 @@ function generateTimestamp(): string {
    ChatWindow
 ========================= */
 export function ChatWindow() {
-  const [sessions, setSessions] = React.useState<ChatSession[]>([
-    { id: '1', title: 'Main Chat', messages: [] },
-  ]);
-  const [activeTab, setActiveTab] = React.useState('1');
+  const { selectedAgent, getTabsForAgent, createTab, initialConversation } = useAgents();
+
+  const [sessions, setSessions] = React.useState<ChatSession[]>([]);
+  const [activeTab, setActiveTab] = React.useState('');
   const [inputValue, setInputValue] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const [currentSessionId, setCurrentSessionId] = React.useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = React.useState<number | null>(null);
 
-  const activeSession = sessions.find(s => s.id === activeTab) ?? sessions[0];
+  const activeSession = sessions.find(s => s.id === activeTab) ?? sessions[0] ?? { id: '', title: '', messages: [] };
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Get agent info from the context
-  const { selectedAgent, selectedTab } = useAgents();
   const agentInfo = selectedAgent
     ? { name: selectedAgent.agent_name, model: 'openrouter/free' }
     : undefined;
 
-  // Load conversation history when agent or tab changes
-  useEffect(() => {
-    const loadHistory = async () => {
-      if (!selectedAgent || !selectedTab) return;
-      console.log(selectedTab);
+  const loadedTabs = React.useRef<Set<string>>(new Set());
+
+  /* ── Fetch history for one tab ── */
+  const fetchTabHistory = React.useCallback(
+    async (agentId: string, tabId: string) => {
+      if (loadedTabs.current.has(tabId)) return;
+      loadedTabs.current.add(tabId);
 
       try {
-        const response = await fetch(
-          `/api/sessions/tabs?agentId=${selectedAgent.agent_id}&tabId=${selectedTab.id}`
-        );
+        const isInitial =
+          initialConversation &&
+          initialConversation.agentId === agentId &&
+          initialConversation.tabId === tabId;
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        const data = isInitial
+          ? initialConversation
+          : await fetch(`/api/sessions/tabs?agentId=${agentId}&tabId=${tabId}`)
+              .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
 
-        const data = await response.json();
-
-        // Process the conversation data and update the session
-        if (data.conversation && Array.isArray(data.conversation)) {
-          // Convert the conversation data to our ChatMessage format
-          const messages: ChatMessage[] = data.conversation.map((conv: any) => ({
-            id: conv.sessionId || crypto.randomUUID(),
+        if (Array.isArray(data?.conversation)) {
+          const messages: ChatMessage[] = data.conversation.map((conv: any, i: number) => ({
+            id: `${conv.sessionId || 'msg'}-${i}`,
             role: conv.role || conv.type,
             content: conv.content || conv.text || '',
             timestamp: conv.timestamp
-              ? new Date(conv.timestamp).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
+              ? new Date(conv.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
               : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           }));
-
-          setSessions([
-            {
-              id: '1',
-              title: selectedTab.name || 'Main Chat',
-              messages: messages,
-            },
-          ]);
-        } else {
-          // If no conversation exists yet, initialize with an empty session
-          setSessions([
-            {
-              id: '1',
-              title: selectedTab.name || 'Main Chat',
-              messages: [],
-            },
-          ]);
+          setSessions(prev => prev.map(s => s.id === tabId ? { ...s, messages } : s));
         }
-      } catch (error) {
-        console.error('Error loading conversation history:', error);
-        // Initialize with an empty session if there's an error
-        setSessions([
-          {
-            id: '1',
-            title: selectedTab.name || 'Main Chat',
-            messages: [],
-          },
-        ]);
+      } catch (err) {
+        console.error('[history]', err);
       }
-    };
+    },
+    [initialConversation]
+  );
 
-    loadHistory();
-  }, [selectedAgent, selectedTab]);
+  /* ── When agent changes: seed sessions from its tabs ── */
+  useEffect(() => {
+    if (!selectedAgent) return;
+
+    const agentTabs = getTabsForAgent(selectedAgent.agent_id);
+    // Fall back to tab_ids when context tabs haven't loaded yet
+    const tabList = agentTabs.length > 0
+      ? agentTabs
+      : (selectedAgent.tab_ids ?? []).map((id: string, i: number) => ({
+          id,
+          name: `Tab ${i + 1}`,
+          agentId: selectedAgent.agent_id,
+          createdAt: new Date(),
+        }));
+
+    loadedTabs.current.clear();
+
+    const newSessions: ChatSession[] = tabList.map(t => ({ id: t.id, title: t.name, messages: [] }));
+    setSessions(newSessions);
+
+    const firstId = newSessions[0]?.id ?? '';
+    setActiveTab(firstId);
+    if (firstId) fetchTabHistory(selectedAgent.agent_id, firstId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAgent?.agent_id]);
+
+  /* ── When TopBar tab is clicked: lazy-load history ── */
+  const handleTabSwitch = (tabId: string) => {
+    setActiveTab(tabId);
+    if (selectedAgent) fetchTabHistory(selectedAgent.agent_id, tabId);
+  };
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'instant' });
+  }, [activeSession?.messages]);
 
   /* ── Append / update helpers ── */
   const appendMessage = (msg: ChatMessage) => {
@@ -410,7 +417,7 @@ export function ChatWindow() {
           message: inputValue.trim(),
           sessionId: currentSessionId ?? undefined,
           agentId: selectedAgent?.agent_id ?? undefined,
-          tabId: selectedTab?.id ?? undefined,
+          tabId: activeTab || undefined,
           approvalMode: 'yolo' as const,
           model: agentInfo?.model,
         }),
@@ -538,9 +545,11 @@ export function ChatWindow() {
   };
 
   const addNewTab = () => {
-    const newId = generateId();
-    setSessions(prev => [...prev, { id: newId, title: `Chat ${prev.length + 1}`, messages: [] }]);
-    setActiveTab(newId);
+    if (!selectedAgent) return;
+    const newTab = createTab(selectedAgent.agent_id, `Tab ${sessions.length + 1}`);
+    loadedTabs.current.add(newTab.id); // new tab has no history to fetch
+    setSessions(prev => [...prev, { id: newTab.id, title: newTab.name, messages: [] }]);
+    setActiveTab(newTab.id);
   };
   if (!agentInfo) {
     return (
@@ -564,15 +573,15 @@ export function ChatWindow() {
         removeTab={removeTab}
         addNewTab={addNewTab}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabSwitch}
         agentInfo={agentInfo}
       />
 
       <ScrollArea className="flex-1 px-4 h-[calc(100vh-10rem)]">
         <div className="max-w-7xl mx-auto space-y-8">
-          {activeSession.messages.map(msg => (
+          {activeSession.messages.map((msg, index) => (
             <div
-              key={msg.content}
+              key={`${index}-${msg.id}-${msg.content}`}
               className={cn('flex gap-4', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}
             >
               <Avatar className="h-9 w-9 border shrink-0">
@@ -604,6 +613,7 @@ export function ChatWindow() {
             </div>
           ))}
 
+          <div ref={bottomRef} />
           {isLoading && (
             <div className="flex gap-4">
               <Avatar className="h-9 w-9 border shrink-0">

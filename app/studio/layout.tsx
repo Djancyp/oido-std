@@ -3,15 +3,21 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { ModelProvider } from '@/contexts/Models';
 import { AgentsProvider } from '@/contexts/Agents';
 import { fetchModels } from '@/hooks/model';
-import { fetchAgents } from '@/hooks/useAgents';
+import { fetchAgents, fetchAllSessions, fetchTabConversation } from '@/hooks/useAgents';
 export default async function StudioLayout({ children }: { children: React.ReactNode }) {
 
-  const models = await fetchModels();
-  const agents = await fetchAgents();
+  const [models, agents, sessions] = await Promise.all([fetchModels(), fetchAgents(), fetchAllSessions()]);
+
+  const firstAgent = agents[0];
+  const firstTabId = firstAgent?.tab_ids?.[0];
+  const initialConversation =
+    firstAgent && firstTabId
+      ? await fetchTabConversation(firstAgent.agent_id, firstTabId)
+      : null;
 
   return (
     <ModelProvider initialModels={models}>
-      <AgentsProvider initialAgents={agents}>
+      <AgentsProvider initialAgents={agents} initialSessions={sessions} initialConversation={initialConversation}>
         <SidebarProvider>
           <AppSidebar />
           <SidebarInset>

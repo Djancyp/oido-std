@@ -15,6 +15,46 @@ export async function fetchAgents(): Promise<Agent[]> {
   return response.json();
 }
 
+export type RawSession = {
+  id: string;
+  tabId: string;
+  agentId: string;
+  firstPrompt?: string;
+  updatedAt: string;
+};
+
+export async function fetchAllSessions(): Promise<RawSession[]> {
+  try {
+    const response = await fetch(`${baseUrl}/api/sessions/list`);
+    if (!response.ok) return [];
+    return response.json();
+  } catch {
+    return [];
+  }
+}
+
+export type RawTabConversation = {
+  agentId: string;
+  tabId: string;
+  conversation: any[];
+};
+
+export async function fetchTabConversation(
+  agentId: string,
+  tabId: string
+): Promise<RawTabConversation | null> {
+  try {
+    const response = await fetch(
+      `${baseUrl}/api/sessions/tabs?agentId=${agentId}&tabId=${tabId}`
+    );
+    if (!response.ok) return null;
+    const data = await response.json();
+    return { agentId, tabId, conversation: data.conversation ?? [] };
+  } catch {
+    return null;
+  }
+}
+
 async function createAgent(name: string) {
   const response = await fetch('/api/agents', {
     method: 'POST',
@@ -45,10 +85,11 @@ async function deleteAgent(name: string) {
 
 /* --- Exported Hooks --- */
 
-export function useAgentsQuery() {
+export function useAgentsQuery(options?: { initialData?: Agent[] }) {
   return useQuery({
     queryKey: agentKeys.list(),
     queryFn: fetchAgents,
+    initialData: options?.initialData,
   });
 }
 
