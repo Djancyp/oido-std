@@ -55,11 +55,19 @@ export async function fetchTabConversation(
   }
 }
 
-async function createAgent(name: string) {
+export type CreateAgentPayload = {
+  name: string;
+  skills?: string[];
+  exclude_tools?: string[];
+  system_prompt?: string;
+  model?: string;
+};
+
+async function createAgent(payload: CreateAgentPayload) {
   const response = await fetch('/api/agents', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(payload),
   });
   return response.json();
 }

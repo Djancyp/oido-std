@@ -29,9 +29,5 @@ export function ModelProvider({
 }
 
 export const useModels = () => {
-  const context = useContext(ModelContext);
-  if (!context) {
-    throw new Error('useModels must be used within a ModelProvider');
-  }
-  return context;
+  return useContext(ModelContext) ?? { models: null, setModels: () => {} };
 };

@@ -30,6 +30,8 @@ type CreateAgentBody = {
   skills?: string[];
   exclude_tools?: string[];
   subagents?: string[];
+  system_prompt?: string;
+  model?: string;
 };
 
 type UpdateAgentBody = {
@@ -85,6 +87,8 @@ export async function POST(req: NextRequest) {
       ...buildFlags('skills', body.skills),
       ...buildFlags('exclude-tools', body.exclude_tools),
       ...buildFlags('subagent', body.subagents),
+      ...(body.system_prompt ? [`--system-prompt "${body.system_prompt.replace(/"/g, '\\"')}"`] : []),
+      ...(body.model ? [`--model "${body.model}"`] : []),
     ];
 
     const command = args.join(' ');

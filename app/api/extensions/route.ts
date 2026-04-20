@@ -38,6 +38,22 @@ export type Extension = {
 };
 
 /* =========================
+   DELETE: uninstall extension
+========================= */
+export async function DELETE(req: NextRequest) {
+  try {
+    const oido = getOido();
+    const { name } = await req.json();
+    if (!name) return NextResponse.json({ error: 'name required' }, { status: 400 });
+    const stdout = await runCmd(`${oido} extensions uninstall ${name}`);
+    return NextResponse.json({ success: true, output: stdout });
+  } catch (err: any) {
+    console.error('Error in DELETE /api/extensions:', err);
+    return NextResponse.json({ error: err.message || 'Failed to uninstall extension' }, { status: 500 });
+  }
+}
+
+/* =========================
    GET: list extensions
 ========================= */
 export async function GET() {

@@ -2,11 +2,21 @@ import { AppSidebar } from '@/components/studio/sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { ModelProvider } from '@/contexts/Models';
 import { AgentsProvider } from '@/contexts/Agents';
+import { ToolsProvider } from '@/contexts/Tools';
+import { SkillsProvider } from '@/contexts/Skills';
 import { fetchModels } from '@/hooks/model';
 import { fetchAgents, fetchAllSessions, fetchTabConversation } from '@/hooks/useAgents';
+import { fetchTools } from '@/hooks/tools';
+import { fetchSkills } from '@/hooks/skills';
 export default async function StudioLayout({ children }: { children: React.ReactNode }) {
 
-  const [models, agents, sessions] = await Promise.all([fetchModels(), fetchAgents(), fetchAllSessions()]);
+  const [models, agents, sessions, tools, skills] = await Promise.all([
+    fetchModels(),
+    fetchAgents(),
+    fetchAllSessions(),
+    fetchTools(),
+    fetchSkills(),
+  ]);
 
   const firstAgent = agents[0];
   const firstTabId = firstAgent?.tab_ids?.[0];
@@ -17,6 +27,8 @@ export default async function StudioLayout({ children }: { children: React.React
 
   return (
     <ModelProvider initialModels={models}>
+      <ToolsProvider initialTools={tools}>
+      <SkillsProvider initialSkills={skills}>
       <AgentsProvider initialAgents={agents} initialSessions={sessions} initialConversation={initialConversation}>
         <SidebarProvider>
           <AppSidebar />
@@ -25,6 +37,8 @@ export default async function StudioLayout({ children }: { children: React.React
           </SidebarInset>
         </SidebarProvider>
       </AgentsProvider>
+      </SkillsProvider>
+      </ToolsProvider>
     </ModelProvider>
   );
 }
