@@ -58,8 +58,8 @@ export function ExtensionSettingsContent({ extensionName, onSaveSuccess }: Props
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-1">
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         {configs.map((cfg: any) => {
           const key = cfg.key ?? cfg.envVar;
           const val = values[key] ?? '';
@@ -94,7 +94,7 @@ export function ExtensionSettingsContent({ extensionName, onSaveSuccess }: Props
         })}
       </div>
 
-      <div className="flex justify-end pt-3 mt-3 border-t shrink-0">
+      <div className="flex justify-end pt-3 mt-3 border-t">
         <Button onClick={handleSave} disabled={save.isPending} className="gap-2 h-9">
           {save.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           Save Settings
