@@ -15,7 +15,6 @@ import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github-dark.css';
-import rehypeRaw from 'rehype-raw';
 
 /* =========================
    Types
@@ -212,7 +211,7 @@ function AssistantBubble({ msg, onAnswer }: AssistantBubbleProps) {
         <div className="text-sm leading-relaxed bg-muted/50 border rounded-2xl rounded-tl-none px-4 py-2.5 shadow-sm">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeHighlight, rehypeRaw]}
+            rehypePlugins={[rehypeHighlight]}
             components={components as any}
           >
             {msg.content}
@@ -624,6 +623,8 @@ export function ChatWindow() {
     }
   };
 
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
   const addNewTab = () => {
     if (!selectedAgent) return;
     const newTab = createTab(selectedAgent.agent_id, `Tab ${sessions.length + 1}`);
@@ -713,6 +714,7 @@ export function ChatWindow() {
       <CardFooter className="border-t p-4 bg-muted/10 shrink-0">
         <div className="flex w-full max-w-3xl mx-auto items-end gap-3">
           <textarea
+            ref={textareaRef}
             placeholder="Ready for next command..."
             className="flex-1 min-h-[48px] resize-none bg-background rounded-xl shadow-inner border border-muted-foreground/20 px-3 py-3 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
             value={inputValue}

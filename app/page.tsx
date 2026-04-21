@@ -1,5 +1,8 @@
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from 'next';
+export const metadata: Metadata = { title: 'Sign In' };
+
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';

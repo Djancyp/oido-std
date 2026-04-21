@@ -1,5 +1,11 @@
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from 'next';
+export async function generateMetadata({ params }: { params: Promise<{ name: string }> }): Promise<Metadata> {
+  const { name } = await params;
+  return { title: `Pipeline: ${name}` };
+}
+
 import { fetchPipelines, fetchPipelineTools } from '@/hooks/pipelines';
 import { PipelineDetail } from '@/components/studio/pipelines/PipelinesClient';
 

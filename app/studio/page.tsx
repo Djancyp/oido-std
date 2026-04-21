@@ -1,5 +1,8 @@
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from 'next';
+export const metadata: Metadata = { title: 'Studio' };
+
 import { ChatWindow } from '@/components/studio/ChatBox';
 import { AppSidebar } from '@/components/studio/sidebar';
 

@@ -1,5 +1,8 @@
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from 'next';
+export const metadata: Metadata = { title: 'Providers' };
+
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { getServerSession } from 'next-auth';

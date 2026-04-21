@@ -1,5 +1,8 @@
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from 'next';
+export const metadata: Metadata = { title: 'Pipeline Schedules' };
+
 import { fetchPipelines, fetchSchedules } from '@/hooks/pipelines';
 import { SchedulesClient } from '@/components/studio/pipelines/SchedulesClient';
 
