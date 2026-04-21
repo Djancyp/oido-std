@@ -10,6 +10,8 @@ services:
     restart: unless-stopped
     ports:
       - 5417:3000
+    environment:
+      - AGENT_WORKDIR=/home/node
     volumes:
       - app-data:/app/data
       - /usr/local/bin/oido:/usr/local/bin/oido

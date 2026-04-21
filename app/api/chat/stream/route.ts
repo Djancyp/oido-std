@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
         name: 'xterm-256color',
         cols: 10000,
         rows: 50,
+        cwd: process.env.AGENT_WORKDIR ?? process.env.HOME ?? '/tmp',
         env: {
           ...(process.env as Record<string, string>),
           NODE_ENV: process.env.NODE_ENV || 'development',
