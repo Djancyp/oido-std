@@ -9,6 +9,7 @@ type ChatRequest = {
   tabId?: string;
   model?: string;
   systemPrompt?: string;
+  excludeTools?: string[];
   conversationId?: number;
   sessionId?: string;
   continue?: boolean;
@@ -62,6 +63,10 @@ export async function POST(req: NextRequest) {
       if (!body.model) body.model = 'openrouter/free';
       args.push('-m', body.model);
       if (body.systemPrompt) args.push('--system-prompt', body.systemPrompt);
+      if (body.excludeTools?.length) {
+        for (const tool of body.excludeTools) args.push('--no-tool', tool);
+      }
+      console.log('[DEBUG][ARGS] ', args);
 
       const child = pty.spawn('/home/djan/Documents/codding/agent-cli/oido-cli/oido', args, {
         name: 'xterm-256color',

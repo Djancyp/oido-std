@@ -482,6 +482,8 @@ export function ChatWindow() {
           tabId: activeTab || undefined,
           approvalMode: 'yolo' as const,
           model: agentInfo?.model,
+          systemPrompt: selectedAgent?.system_prompt || undefined,
+          excludeTools: selectedAgent?.exclude_tools?.length ? selectedAgent.exclude_tools : undefined,
         }),
       });
 
@@ -608,6 +610,18 @@ export function ChatWindow() {
     const next = sessions.filter(s => s.id !== id);
     setSessions(next);
     if (activeTab === id) setActiveTab(next[0].id);
+
+    if (selectedAgent) {
+      fetch('/api/sessions/tabs', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentId: selectedAgent.agent_id,
+          tabId: id,
+          agentName: selectedAgent.agent_name,
+        }),
+      }).catch(err => console.error('[removeTab] session delete failed:', err));
+    }
   };
 
   const addNewTab = () => {

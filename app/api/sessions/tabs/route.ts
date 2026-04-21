@@ -1,4 +1,7 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { unlinkSync } from 'fs';
+import { join } from 'path';
+import yaml from 'js-yaml';
 
 export const runtime = 'nodejs';
 
@@ -99,6 +102,52 @@ export async function GET(req: NextRequest) {
       JSON.stringify({ error: 'Failed to retrieve session tabs', details: error.message }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
+  }
+}
+
+/* DELETE: remove all sessions for a tab and update agent YAML */
+export async function DELETE(req: NextRequest) {
+  try {
+    const { agentId, tabId, agentName } = await req.json() as {
+      agentId: string;
+      tabId: string;
+      agentName: string;
+    };
+
+    if (!agentId || !tabId || !agentName) {
+      return NextResponse.json({ error: 'agentId, tabId, and agentName are required' }, { status: 400 });
+    }
+
+    const oidoPath = process.env.OIDO_PATH || '/home/djan/Documents/codding/agent-cli/oido-cli/oido';
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const execAsync = promisify(exec);
+
+    // Find session files belonging to this tab
+    const { stdout } = await execAsync(`${oidoPath} sessions list --json`).catch(() => ({ stdout: '[]' }));
+    const sessions: Array<{ tabId: string; path: string }> = JSON.parse(stdout.trim() || '[]');
+
+    const { unlinkSync } = await import('fs');
+    let deletedCount = 0;
+    for (const s of sessions) {
+      if (s.tabId === tabId && s.path) {
+        try { unlinkSync(s.path); deletedCount++; } catch {}
+      }
+    }
+
+    // Remove tabId from agent YAML (best-effort)
+    try {
+      const { readFileSync, writeFileSync } = await import('fs');
+      const agentsDir = join(process.env.HOME ?? '/root', '.config', 'oido', 'agents');
+      const raw = readFileSync(join(agentsDir, `${agentName}.yaml`), 'utf-8');
+      const parsed = yaml.load(raw) as Record<string, unknown> & { tab_ids?: string[] };
+      parsed.tab_ids = (parsed.tab_ids ?? []).filter((id: string) => id !== tabId);
+      writeFileSync(join(agentsDir, `${agentName}.yaml`), yaml.dump(parsed), 'utf-8');
+    } catch {}
+
+    return NextResponse.json({ success: true, deletedSessions: deletedCount });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
