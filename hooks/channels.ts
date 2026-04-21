@@ -75,6 +75,19 @@ export function useConfigureChannelMutation() {
   });
 }
 
+export function useDeleteChannelMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (channel: string) =>
+      fetch('/api/channels/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel }),
+      }).then(r => r.json()),
+    onSuccess: () => qc.invalidateQueries({ queryKey: channelKeys.list() }),
+  });
+}
+
 export function usePairingMutation() {
   const qc = useQueryClient();
   return useMutation({

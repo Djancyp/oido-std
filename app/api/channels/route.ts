@@ -20,6 +20,8 @@ export type Channel = {
   senderPolicy?: string;
   sessionScope?: string;
   dispatchMode?: string;
+  model?: string;
+  instructions?: string;
 };
 
 /* GET: list channels */
