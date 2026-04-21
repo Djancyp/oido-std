@@ -137,7 +137,7 @@ function NewChannelForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
 
   const handleSave = async () => {
     if (!name.trim()) return;
-    await configure.mutateAsync({ channel: type, name: name.trim(), ...values });
+    await configure.mutateAsync({ channel: name.trim(), type, settings: values });
     onSuccess();
   };
 

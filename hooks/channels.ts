@@ -65,7 +65,7 @@ export function useStopChannelMutation() {
 export function useConfigureChannelMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: Record<string, string>) =>
+    mutationFn: (body: { channel: string; type: string; settings: Record<string, string> }) =>
       fetch('/api/channels/configure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
