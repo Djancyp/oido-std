@@ -1,8 +1,10 @@
 'use client';
 import { Avatar, AvatarImage, AvatarFallback, AvatarBadge } from '@/components/ui/avatar';
-import { Blocks, Cable, Command, Unplug, Workflow, Users } from 'lucide-react';
+import { Blocks, Cable, Command, Moon, Sun, Unplug, Workflow, Users } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +17,9 @@ import {
 import { Button } from '@/components/ui/button';
 
 function FooterNav({ user }: { user: { name?: string | null; email?: string | null; image?: string | null } | null }) {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   return (
     <>
       <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-slate-200">
@@ -58,6 +63,15 @@ function FooterNav({ user }: { user: { name?: string | null; email?: string | nu
           <Users size={18} />
           <span className="text-sm">Team</span>
         </Link>
+      </div>
+      <div className="flex items-center gap-2 py-1.5">
+        <button
+          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+          className="flex w-full gap-2 items-center text-sm cursor-pointer hover:bg-sidebar-accent rounded px-1 py-0.5 transition-colors"
+        >
+          {mounted && resolvedTheme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          <span>{mounted && resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+        </button>
       </div>
       <div className="mt-2 w-full flex items-center gap-2 py-5">
         <DropdownMenu>

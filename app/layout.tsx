@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { ModalProvider } from '@/contexts/Modal';
 import { ReactQueryProvider } from '@/components/ReactQueryProvider';
 import { SessionProvider } from '@/components/auth/SessionProvider';
+import { ThemeProvider } from '@/components/ThemeProvider';
 // Import your auth config to get the session
 // import { auth } from "@/auth"; // If using Auth.js v5
 // import { getServerSession } from "next-auth"; // If using NextAuth v4
@@ -40,21 +41,24 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={cn(
         'h-full antialiased',
         geistSans.variable,
         geistMono.variable,
         jetbrainsMono.variable,
-        'font-sans' // Set a default base font
+        'font-sans'
       )}
     >
       <body className="min-h-full flex flex-col">
         {/* Pass session to your provider if your provider expects it */}
-        <SessionProvider>
-          <ReactQueryProvider>
-            <ModalProvider>{children}</ModalProvider>
-          </ReactQueryProvider>
-        </SessionProvider>
+        <ThemeProvider>
+          <SessionProvider>
+            <ReactQueryProvider>
+              <ModalProvider>{children}</ModalProvider>
+            </ReactQueryProvider>
+          </SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
