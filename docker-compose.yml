@@ -15,6 +15,7 @@ services:
       - /usr/local/bin/oido:/usr/local/bin/oido
       - /home/djan/.config/oido:/home/node/.config/oido:rw
       - /home/djan/.cache/oido:/home/node/.cache/oido:rw
+      - /home/djan/.local/share/oido:/home/node/.local/share/oido:rw
       - /home/djan/.ssh:/home/node/.ssh:ro
     labels:
       - "traefik.enable=true"
