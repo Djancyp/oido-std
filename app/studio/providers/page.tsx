@@ -3,15 +3,15 @@ export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'Providers' };
 
-import { execFile } from 'child_process';
-import { promisify } from 'util';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { ProvidersClient } from '@/components/studio/providers/ProvidersClient';
+import { getOido } from '@/lib/utils';
+import { exec as execCb } from 'child_process';
+import { promisify } from 'util';
 
-const exec = promisify(execFile);
-const OIDO = process.env.OIDO_BIN || '/home/djan/Documents/codding/agent-cli/oido-cli/oido';
+const exec = promisify(execCb);
 
 export default async function ProvidersPage() {
   const session = await getServerSession(authOptions);
@@ -19,8 +19,9 @@ export default async function ProvidersPage() {
 
   let initialData = { activeProvider: '', providers: [] as any[] };
   try {
-    const { stdout } = await exec(OIDO, ['auth', 'status', '--json']);
-    initialData = JSON.parse(stdout);
+    const oido = getOido();
+    const { stdout } = await exec(`${oido} auth status --json`);
+    try { initialData = JSON.parse(stdout.trim()); } catch {}
   } catch {}
 
   return <ProvidersClient initialData={initialData} />;
