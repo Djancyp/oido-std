@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pipeline, PipelineListItem, PipelineNode } from '@/app/api/pipelines/route';
+import { PipelineScheduleItem } from '@/app/api/pipelines/schedule/route';
 import { PipelineTool } from '@/app/api/pipelines/tools/route';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -43,8 +44,18 @@ export function usePipelineToolsQuery(options?: { initialData?: PipelineTool[] }
   return useQuery({ queryKey: keys.tools(), queryFn: fetchPipelineTools, initialData: options?.initialData });
 }
 
-export function usePipelineScheduleQuery() {
-  return useQuery({ queryKey: keys.schedule(), queryFn: () => fetch('/api/pipelines/schedule').then(r => r.json()) });
+export async function fetchSchedules(): Promise<PipelineScheduleItem[]> {
+  const res = await fetch(`${baseUrl}/api/pipelines/schedule`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export function usePipelineScheduleQuery(options?: { initialData?: PipelineScheduleItem[] }) {
+  return useQuery<PipelineScheduleItem[]>({
+    queryKey: keys.schedule(),
+    queryFn: () => fetch('/api/pipelines/schedule').then(r => r.json()),
+    initialData: options?.initialData,
+  });
 }
 
 export function useCreatePipelineMutation() {

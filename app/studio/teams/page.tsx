@@ -26,5 +26,11 @@ export default async function TeamsPage() {
     roles: u.roles.map(r => ({ id: r.role.id, name: r.role.name })),
   }));
 
-  return <TeamsClient initialUsers={serializedUsers} initialRoles={roles} />;
+  const serializedRoles = roles.map(r => ({
+    id: r.id,
+    name: r.name,
+    description: r.description ?? undefined,
+  }));
+
+  return <TeamsClient initialUsers={serializedUsers} initialRoles={serializedRoles} />;
 }

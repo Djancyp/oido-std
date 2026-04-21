@@ -41,10 +41,17 @@ export function AuthPage({ hasUsers }: { hasUsers: boolean }) {
         body: JSON.stringify({ name, email, password }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? 'Registration failed'); return; }
+      if (!res.ok) {
+        setError(data.error ?? 'Registration failed');
+        return;
+      }
 
       const result = await signIn('credentials', { email, password, redirect: false });
-      if (result?.error) { setError('Registered but login failed. Try logging in.'); setMode('login'); return; }
+      if (result?.error) {
+        setError('Registered but login failed. Try logging in.');
+        setMode('login');
+        return;
+      }
       router.push('/studio');
     } catch {
       setError('Unexpected error. Try again.');
@@ -59,7 +66,10 @@ export function AuthPage({ hasUsers }: { hasUsers: boolean }) {
     setLoading(true);
     try {
       const result = await signIn('credentials', { email, password, redirect: false });
-      if (result?.error) { setError('Invalid email or password'); return; }
+      if (result?.error) {
+        setError('Invalid email or password');
+        return;
+      }
       router.push('/studio');
     } catch {
       setError('Unexpected error. Try again.');
@@ -74,9 +84,13 @@ export function AuthPage({ hasUsers }: { hasUsers: boolean }) {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-sm flex flex-col gap-6 p-8 border rounded-xl shadow-sm bg-card">
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold">
-            {isRegister ? 'Create account' : 'Sign in'}
+          <h1 className="font-bold text-xl mb-2">
+            <span className="bg-primary text-primary-foreground px-3 py-1 rounded-2xl rounded-tr-none shadow-sm mr-1">
+              O
+            </span>
+            ido Studio
           </h1>
+          <h1 className="text-lg font-semibold">{isRegister ? 'Create account' : 'Sign in'}</h1>
           <p className="text-sm text-muted-foreground">
             {isRegister ? 'Set up your oido account.' : 'Welcome back.'}
           </p>
@@ -120,15 +134,30 @@ export function AuthPage({ hasUsers }: { hasUsers: boolean }) {
           {error && <ErrorMsg msg={error} />}
 
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? (isRegister ? 'Creating...' : 'Signing in...') : isRegister ? 'Create account' : 'Sign in'}
+            {loading
+              ? isRegister
+                ? 'Creating...'
+                : 'Signing in...'
+              : isRegister
+                ? 'Create account'
+                : 'Sign in'}
           </Button>
         </form>
 
         {hasUsers && (
           <p className="text-center text-sm text-muted-foreground">
             {isRegister ? (
-              <>Already have an account?{' '}
-                <button onClick={() => { setError(''); setMode('login'); }} className="text-foreground underline underline-offset-4">Sign in</button>
+              <>
+                Already have an account?{' '}
+                <button
+                  onClick={() => {
+                    setError('');
+                    setMode('login');
+                  }}
+                  className="text-foreground underline underline-offset-4"
+                >
+                  Sign in
+                </button>
               </>
             ) : null}
           </p>

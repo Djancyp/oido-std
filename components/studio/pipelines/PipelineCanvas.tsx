@@ -17,7 +17,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { PipelineNode } from '@/app/api/pipelines/route';
-
+import { useTheme } from 'next-themes';
 const NODE_COLORS: Record<string, string> = {
   trigger: '#f59e0b',
   ai: '#6366f1',
@@ -86,7 +86,7 @@ function toReactFlowNodes(nodes: PipelineNode[]): Node[] {
       data: {
         label: (
           <div className="flex flex-col gap-0.5 text-left">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 text-primary">
               <span>
                 {NODE_ICONS[n.config?.builtinTool?.toolName ?? n.label] ??
                   NODE_ICONS[n.type] ??
@@ -100,8 +100,9 @@ function toReactFlowNodes(nodes: PipelineNode[]): Node[] {
       },
       style: {
         background: `${NODE_COLORS[n.type] ?? '#94a3b8'}18`,
+				backdropFilter: 'blur(2px)',
         border: `1.5px solid ${NODE_COLORS[n.type] ?? '#94a3b8'}`,
-        borderRadius: 8,
+        borderRadius: 4,
         padding: '8px 12px',
         minWidth: 140,
         fontSize: 12,
@@ -141,6 +142,8 @@ export function PipelineCanvas({ nodes, onNodeClick, selectedNodeId, onConnectio
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(rfNodes);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(rfEdges);
 
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   useEffect(() => {
     setFlowNodes(toReactFlowNodes(nodes));
   }, [nodes]);
@@ -188,8 +191,18 @@ export function PipelineCanvas({ nodes, onNodeClick, selectedNodeId, onConnectio
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.3}
       >
-        <Background variant={BackgroundVariant.Lines} color="#e2e8f0" gap={20} lineWidth={0.5} />
-        <Background variant={BackgroundVariant.Lines} color="#94a3b8" gap={100} lineWidth={1} />
+        <Background
+          variant={BackgroundVariant.Lines}
+          color={isDark ? '#334155' : '#e2e8f0'}
+          gap={10}
+          lineWidth={0.5}
+        />
+        <Background
+          variant={BackgroundVariant.Lines}
+          color={isDark ? '#475569' : '#cbd5f5'}
+          gap={100}
+          lineWidth={1}
+        />
         <Controls />
         <MiniMap nodeColor={n => NODE_COLORS[(n as any).data?.nodeType] ?? '#94a3b8'} />
       </ReactFlow>

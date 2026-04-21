@@ -1,6 +1,6 @@
 'use client';
 import { Avatar, AvatarImage, AvatarFallback, AvatarBadge } from '@/components/ui/avatar';
-import { Blocks, Cable, Command, Moon, Sun, Unplug, Workflow, Users, KeyRound } from 'lucide-react';
+import { Blocks, Cable, Calendar, Command, Moon, Sun, Unplug, Workflow, Users, KeyRound } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
@@ -66,8 +66,8 @@ function FooterNav({
         </Link>
       </div>
       <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
-        <Link href="/studio/extensions" className="flex gap-2 w-full">
-          <Workflow size={18} />
+        <Link href="/studio/pipelines/schedule" className="flex gap-2 w-full">
+          <Calendar size={18} />
           <span className="text-sm">Cron Jobs</span>
         </Link>
       </div>

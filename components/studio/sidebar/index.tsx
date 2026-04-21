@@ -11,7 +11,12 @@ export async function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-border">
-        <h1 className="font-bold text-xl">Oido Studio</h1>
+        <h1 className="font-bold text-xl">
+          <span className="bg-primary text-primary-foreground px-3 py-1 rounded-2xl rounded-tr-none shadow-sm mr-1">
+            O 
+          </span>
+          ido Studio
+        </h1>
       </SidebarHeader>
 
       <SidebarContent>

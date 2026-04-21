@@ -3,13 +3,13 @@ import { getOido } from '@/lib/utils';
 
 export const runtime = 'nodejs';
 
-export type PipelineSchedule = {
-  id: string;
-  pipeline: string;
-  cron: string;
-  enabled: boolean;
-  lastRun?: string;
-  nextRun?: string;
+export type PipelineScheduleItem = {
+  cronJobId: string;
+  pipelineId: string;
+  cronExpr: string;
+  runCount: number;
+  lastStatus?: string;
+  createdAt: string;
 };
 
 async function runCmd(cmd: string) {
@@ -24,7 +24,7 @@ export async function GET() {
     const oido = getOido();
     const { stdout } = await import('child_process').then(async ({ exec }) => {
       const { promisify } = await import('util');
-      return promisify(exec)(`${oido} pipelines schedule list`).catch(() => ({ stdout: '[]' }));
+      return promisify(exec)(`${oido} pipelines schedule list --json`).catch(() => ({ stdout: '[]' }));
     });
     const trimmed = stdout.trim();
     if (!trimmed || !trimmed.startsWith('[')) return NextResponse.json([]);

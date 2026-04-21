@@ -10,7 +10,7 @@ export default async function PipelineBuilderPage({
 }) {
   const { name } = await params;
   const [pipelines, tools] = await Promise.all([fetchPipelines(), fetchPipelineTools()]);
-  const item = pipelines.find(p => p.name === name) ?? { name, version: '2', nodeCount: 0 };
+  const item = pipelines.find(p => p.name === name) ?? { name, version: '2', description: '', createdAt: '', updatedAt: '' };
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PipelineDetail item={item} tools={tools} />
