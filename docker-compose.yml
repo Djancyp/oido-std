@@ -8,27 +8,30 @@ services:
     image: oido-std:latest
     container_name: oido-std
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     environment:
       NODE_ENV: production
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      DATABASE_URL: file:/app/data/prod.db
-      OIDO_PATH: /app/oido
+      DATABASE_URL: ${DATABASE_URL:-file:/app/data/prod.db}
+      OIDO_PATH: ${OIDO_PATH:-oido}
     volumes:
       - app-data:/app/data
-      # Uncomment to mount oido binary from host instead of baking it in:
-      # - ./oido:/app/oido:ro
-      # Mount oido config + session cache from host:
-      - oido-config:/root/.config/oido
-      - oido-cache:/root/.cache/oido
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/agents', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
+      - /usr/local/bin/oido:/usr/local/bin/oido
+      - /home/djan/.config/oido:/home/node/.config/oido:rw
+      - /home/djan/.cache/oido:/home/node/.cache/oido:rw
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.oido.rule=Host(`oido.bruna-tech.com`)"
+      - "traefik.http.routers.oido.entrypoints=websecure"
+      - "traefik.http.routers.oido.tls.certResolver=myresolver"
+      - "traefik.http.services.oido.loadbalancer.server.port=3000"
+      - "traefik.http.routers.oido.priority=1"
+    networks:
+      - traefik_proxy
+
+networks:
+  traefik_proxy:
+    external: true
 
 volumes:
   app-data:
