@@ -48,9 +48,9 @@ function FooterNav({
         </Link>
       </div>
       <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
-        <Link href="/studio/extensions" className="flex w-full gap-2">
-          <Unplug size={18} className="gap-2" />
-          <span className="text-sm">Mcp</span>
+        <Link href="/studio/mcp" className="flex w-full gap-2">
+          <Unplug size={18} />
+          <span className="text-sm">MCP</span>
         </Link>
       </div>
       <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
