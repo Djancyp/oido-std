@@ -10,22 +10,15 @@ export async function AppSidebar() {
   const session = await getServerSession(authOptions);
   return (
     <Sidebar>
-      <SidebarHeader className="border-b border-slate-200">
+      <SidebarHeader className="border-b border-border">
         <h1 className="font-bold text-xl">Oido Studio</h1>
-        <Link
-          href="/studio/providers"
-          className="flex items-center gap-2 py-1 px-1 text-sm text-slate-600 hover:text-slate-900 hover:bg-sidebar-accent rounded transition-colors"
-        >
-          <KeyRound size={15} />
-          Providers
-        </Link>
       </SidebarHeader>
 
       <SidebarContent>
         <AgentsApi />
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-slate-200">
+      <SidebarFooter className="border-t border-border">
         <FooterNav user={session?.user ?? null} />
       </SidebarFooter>
     </Sidebar>

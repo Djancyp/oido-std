@@ -1,6 +1,6 @@
 'use client';
 import { Avatar, AvatarImage, AvatarFallback, AvatarBadge } from '@/components/ui/avatar';
-import { Blocks, Cable, Command, Moon, Sun, Unplug, Workflow, Users } from 'lucide-react';
+import { Blocks, Cable, Command, Moon, Sun, Unplug, Workflow, Users, KeyRound } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
@@ -16,49 +16,62 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 
-function FooterNav({ user }: { user: { name?: string | null; email?: string | null; image?: string | null } | null }) {
+function FooterNav({
+  user,
+}: {
+  user: { name?: string | null; email?: string | null; image?: string | null } | null;
+}) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   return (
     <>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-slate-200">
+      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
+        <Link
+          href="/studio/providers"
+          className="flex w-full gap-2"
+        >
+          <KeyRound size={18} />
+          <span className="text-sm">Providers</span>
+        </Link>
+      </div>
+      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/channels" className="flex w-full gap-2">
           <Cable size={18} />
           <span className="text-sm">Channels</span>
         </Link>
       </div>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-slate-200">
+      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/extensions" className="flex w-full gap-2">
           <Blocks size={18} />
           <span className="text-sm">Extensions</span>
         </Link>
       </div>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-slate-200">
+      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/extensions" className="flex w-full gap-2">
           <Unplug size={18} className="gap-2" />
           <span className="text-sm">Mcp</span>
         </Link>
       </div>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-slate-200">
+      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/skills" className="flex gap-2 w-full">
           <Command size={18} />
           <span className="text-sm">Skills</span>
         </Link>
       </div>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-slate-200">
+      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/pipelines" className="flex gap-2 w-full">
           <Workflow size={18} />
           <span className="text-sm">Pipelines</span>
         </Link>
       </div>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-slate-200">
+      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/extensions" className="flex gap-2 w-full">
           <Workflow size={18} />
           <span className="text-sm">Cron Jobs</span>
         </Link>
       </div>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-slate-200">
+      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/teams" className="flex gap-2 w-full">
           <Users size={18} />
           <span className="text-sm">Team</span>

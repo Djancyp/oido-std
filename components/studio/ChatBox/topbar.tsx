@@ -26,7 +26,7 @@ function TopBar({
 }: TabProps) {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <div className="flex items-center px-2 bg-slate-50 border-b border-sidebar-border pt-3">
+      <div className="flex items-center px-2 bg-background border-b border-border pt-3">
         <div className="flex items-center flex-1 overflow-hidden">
           <ScrollArea className="w-full whitespace-nowrap">
             <TabsList className="bg-transparent border-none h-10 justify-start p-0 gap-1">
@@ -67,7 +67,7 @@ function TopBar({
         
         {/* Agent Info Display */}
         {agentInfo && (
-          <div className="flex items-center gap-2 px-3 py-1.5 text-xs bg-slate-100 rounded-md ml-2">
+          <div className="flex items-center gap-2 px-3 py-1.5 text-xs bg-muted rounded-md ml-2">
             <span className="font-medium">{agentInfo.name}</span>
             <span className="text-muted-foreground">•</span>
             <span className="text-muted-foreground">{agentInfo.model}</span>

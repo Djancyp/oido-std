@@ -120,7 +120,7 @@ export function ProvidersClient({ initialData }: { initialData: StatusResponse }
           return (
             <div
               key={p.provider}
-              className="flex flex-col gap-3 rounded-lg border border-slate-200 p-4 bg-white"
+              className="flex flex-col gap-3 rounded-lg border border-border p-4 bg-card"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -135,7 +135,7 @@ export function ProvidersClient({ initialData }: { initialData: StatusResponse }
                     className={
                       p.authenticated
                         ? 'bg-green-100 text-green-700 hover:bg-green-100'
-                        : 'text-slate-500'
+                        : 'text-muted-foreground'
                     }
                   >
                     {p.authenticated ? 'Authenticated' : 'Not authenticated'}
@@ -156,9 +156,9 @@ export function ProvidersClient({ initialData }: { initialData: StatusResponse }
               </div>
 
               {p.authenticated && p.keyMasked && (
-                <div className="text-xs text-slate-500 font-mono bg-slate-50 rounded px-2 py-1">
+                <div className="text-xs text-muted-foreground font-mono bg-muted rounded px-2 py-1">
                   {p.keyMasked}
-                  {p.baseUrl && <span className="ml-3 text-slate-400">{p.baseUrl}</span>}
+                  {p.baseUrl && <span className="ml-3 text-muted-foreground/60">{p.baseUrl}</span>}
                 </div>
               )}
 

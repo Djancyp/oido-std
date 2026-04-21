@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Extension } from '@/app/api/extensions/route';
 
+import { apiFetch } from '@/lib/server-fetch';
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
 export async function fetchExtensions(): Promise<Extension[]> {
-  const res = await fetch(`${baseUrl}/api/extensions`);
+  const res = await apiFetch(`${baseUrl}/api/extensions`);
   if (!res.ok) return [];
   return res.json();
 }
@@ -27,7 +28,7 @@ export function useInstallExtension() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (source: string) =>
-      fetch('/api/extensions/install', {
+      apiFetch('/api/extensions/install', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source }),

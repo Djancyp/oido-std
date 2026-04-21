@@ -62,8 +62,8 @@ const AgentItem = React.memo(
             )}
           </div>
 
-          <Bot size={16} className={depth === 0 ? 'text-black' : 'text-slate-600'} />
-          <span className="text-sm text-slate-900 truncate">{agent.agent_name}</span>
+          <Bot size={16} className={depth === 0 ? 'text-foreground' : 'text-muted-foreground'} />
+          <span className="text-sm text-foreground truncate">{agent.agent_name}</span>
 
           <div className="ml-auto opacity-0 group-hover:opacity-100">
             <AgentDropdown
@@ -461,7 +461,7 @@ export function AgentsApi() {
   return (
     <SidebarGroup>
       <SidebarGroupLabel className="flex items-center justify-between px-2 mb-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Agents</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Agents</span>
         <button
           onClick={handleAddRootAgent}
           className="p-1 hover:bg-sidebar-accent rounded-md transition-colors"

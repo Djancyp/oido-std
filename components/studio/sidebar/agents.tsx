@@ -67,13 +67,9 @@ const AgentItem = React.memo(
 
             <Bot
               size={16}
-              className={
-                depth === 0
-                  ? 'text-black'
-                  : 'text-slate-800'
-              }
+              className={depth === 0 ? 'text-foreground' : 'text-muted-foreground'}
             />
-          <span className={`text-sm text-slate-900`}>{agent.name}</span>
+          <span className="text-sm text-foreground">{agent.name}</span>
 
           <div className="ml-auto">
             <AgentDropdown agentType="agent" agentId={agent.id} />
@@ -122,10 +118,10 @@ export function Agents({ initialAgents = [] }: { initialAgents?: Agent[] }) {
   return (
     <SidebarGroup>
       <SidebarGroupLabel className="flex items-center justify-between px-2 mb-2">
-        <span className="text-sm font-bold uppercase tracking-wider text-black">Agents</span>
+        <span className="text-sm font-bold uppercase tracking-wider text-foreground">Agents</span>
         <button
           onClick={handleAddRootAgent}
-          className="p-1.5 hover:bg-sidebar-accent rounded-full transition-colors border border-transparent active:border-slate-200"
+          className="p-1.5 hover:bg-sidebar-accent rounded-full transition-colors border border-transparent active:border-border"
           title="Add Root Agent"
         >
           <Plus size={16} />
