@@ -1,6 +1,8 @@
+'use client';
 import { Avatar, AvatarImage, AvatarFallback, AvatarBadge } from '@/components/ui/avatar';
-import { Blocks, Cable, Command, Plus, Unplug, Workflow } from 'lucide-react';
+import { Blocks, Cable, Command, Unplug, Workflow, Users } from 'lucide-react';
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +13,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-function FooterNav() {
+
+function FooterNav({ user }: { user: { name?: string | null; email?: string | null; image?: string | null } | null }) {
   return (
     <>
       <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-slate-200">
@@ -33,13 +36,13 @@ function FooterNav() {
         </Link>
       </div>
       <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-slate-200">
-        <Link href="/studio/extensions" className="flex gap-2 w-full">
+        <Link href="/studio/skills" className="flex gap-2 w-full">
           <Command size={18} />
           <span className="text-sm">Skills</span>
         </Link>
       </div>
       <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-slate-200">
-        <Link href="/studio/extensions" className="flex gap-2 w-full">
+        <Link href="/studio/pipelines" className="flex gap-2 w-full">
           <Workflow size={18} />
           <span className="text-sm">Pipelines</span>
         </Link>
@@ -50,16 +53,24 @@ function FooterNav() {
           <span className="text-sm">Cron Jobs</span>
         </Link>
       </div>
+      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-slate-200">
+        <Link href="/studio/teams" className="flex gap-2 w-full">
+          <Users size={18} />
+          <span className="text-sm">Team</span>
+        </Link>
+      </div>
       <div className="mt-2 w-full flex items-center gap-2 py-5">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="p-1.5 w-full justify-baseline items-center cursor-pointer">
+            <Button
+              variant="ghost"
+              className="p-1.5 w-full justify-baseline items-center cursor-pointer"
+            >
               <Avatar>
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>CN</AvatarFallback>
+                <AvatarFallback>{user?.name?.[0] ?? 'O'}</AvatarFallback>
                 <AvatarBadge className="bg-green-600 dark:bg-green-800" />
               </Avatar>
-              <h1>Oido Studio</h1>
+              <h1>{user?.name ?? 'Oido Studio'}</h1>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-50 felx">
@@ -68,7 +79,9 @@ function FooterNav() {
               <DropdownMenuItem>Settings</DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Logout</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>
+              Logout
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

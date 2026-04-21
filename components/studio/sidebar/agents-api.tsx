@@ -10,7 +10,7 @@ import { useAgents } from '@/contexts/Agents';
 import { useSkills } from '@/contexts/Skills';
 import { useTools } from '@/contexts/Tools';
 import { useModels } from '@/contexts/Models';
-import { useCreateAgentMutation, useDeleteAgentMutation, CreateAgentPayload } from '@/hooks/useAgents';
+import { useCreateAgentMutation, useUpdateAgentMutation, useDeleteAgentMutation, CreateAgentPayload } from '@/hooks/useAgents';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { MultiSelect, SingleSelect } from '@/components/ui/multi-select';
@@ -214,6 +214,136 @@ function AgentCreateForm({
 }
 
 /* =========================
+   Agent Edit Form
+========================= */
+function AgentEditForm({
+  agent,
+  onSuccess,
+  onCancel,
+  modelOptions,
+  skillOptions,
+  toolOptions,
+}: {
+  agent: any;
+  onSuccess: () => void;
+  onCancel: () => void;
+  modelOptions: SelectOption[];
+  skillOptions: SelectOption[];
+  toolOptions: SelectOption[];
+}) {
+  const updateMutation = useUpdateAgentMutation();
+
+  const [skills, setSkills] = React.useState<string[]>(agent.skills ?? []);
+  const [excludeTools, setExcludeTools] = React.useState<string[]>(agent.exclude_tools ?? []);
+  const [systemPrompt, setSystemPrompt] = React.useState<string>(agent.system_prompt ?? '');
+  const [model, setModel] = React.useState<string>(agent.model ?? '');
+
+  const handleSubmit = async () => {
+    await updateMutation.mutateAsync({
+      name: agent.agent_name,
+      data: {
+        skills: skills.length > 0 ? skills : undefined,
+        clear_skills: skills.length === 0,
+        exclude_tools: excludeTools.length > 0 ? excludeTools : undefined,
+        clear_exclude_tools: excludeTools.length === 0,
+        system_prompt: systemPrompt.trim() || undefined,
+        clear_system_prompt: !systemPrompt.trim(),
+        model: model.trim() || undefined,
+        clear_model: !model.trim(),
+      },
+    });
+    onSuccess();
+  };
+
+  return (
+    <div className="flex flex-col gap-4 py-2">
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold">Name</label>
+        <p className="h-9 flex items-center px-3 rounded-md border bg-muted/30 font-mono text-sm text-muted-foreground">{agent.agent_name}</p>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold">Model</label>
+        <SingleSelect
+          options={modelOptions}
+          value={model}
+          onChange={setModel}
+          placeholder="e.g. openrouter/free"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold">System Prompt</label>
+        <textarea
+          placeholder="You are a helpful assistant specialized in..."
+          value={systemPrompt}
+          onChange={e => setSystemPrompt(e.target.value)}
+          className="min-h-[90px] w-full rounded-md border bg-muted/20 p-2.5 text-xs leading-relaxed resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold">Skills</label>
+        <MultiSelect
+          options={skillOptions}
+          selected={skills}
+          onChange={setSkills}
+          placeholder="Select skills..."
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold">Exclude Tools</label>
+        <MultiSelect
+          options={toolOptions}
+          selected={excludeTools}
+          onChange={setExcludeTools}
+          placeholder="Select tools to exclude..."
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-2 border-t">
+        <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
+        <Button size="sm" onClick={handleSubmit} disabled={updateMutation.isPending}>
+          {updateMutation.isPending ? <Loader2 size={13} className="animate-spin mr-1" /> : null}
+          Save Changes
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================
+   Agent Delete Confirm
+========================= */
+function AgentDeleteConfirm({
+  agent,
+  onConfirm,
+  onCancel,
+  isPending,
+}: {
+  agent: any;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isPending: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-4 py-2">
+      <p className="text-sm text-muted-foreground">
+        This will permanently remove <span className="font-mono font-semibold text-foreground">{agent.agent_name}</span> and all its sessions. This cannot be undone.
+      </p>
+      <div className="flex justify-end gap-2 pt-2 border-t">
+        <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
+        <Button variant="destructive" size="sm" onClick={onConfirm} disabled={isPending}>
+          {isPending ? <Loader2 size={13} className="animate-spin mr-1" /> : null}
+          Delete Agent
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================
    Main Component
 ========================= */
 
@@ -265,13 +395,44 @@ export function AgentsApi() {
   };
 
   const handleEditAgent = (agentId: string) => {
-    alert(`Editing: ${agentId}`);
+    const agent = agents?.find((a: any) => a.agent_id === agentId);
+    if (!agent) return;
+    openModal({
+      title: 'Edit Agent',
+      description: `Update ${agent.agent_name}`,
+      size: 'lg',
+      content: (
+        <AgentEditForm
+          agent={agent}
+          onSuccess={closeModal}
+          onCancel={closeModal}
+          modelOptions={modelOptions}
+          skillOptions={skillOptions}
+          toolOptions={toolOptions}
+        />
+      ),
+      footer: null,
+    });
   };
 
   const handleDeleteAgent = (agentId: string) => {
-    if (confirm('Are you sure you want to remove this agent?')) {
-      deleteMutation.mutate(agentId);
-    }
+    const agent = agents?.find((a: any) => a.agent_id === agentId);
+    if (!agent) return;
+    openModal({
+      title: 'Delete Agent',
+      size: 'sm',
+      content: (
+        <AgentDeleteConfirm
+          agent={agent}
+          isPending={deleteMutation.isPending}
+          onConfirm={() => {
+            deleteMutation.mutate(agent.agent_name, { onSuccess: closeModal });
+          }}
+          onCancel={closeModal}
+        />
+      ),
+      footer: null,
+    });
   };
 
   const handleSelectAgent = (agentId: string) => {

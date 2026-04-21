@@ -1,38 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { useAgents, useCreateAgent, useDeleteAgent } from '@/hooks/useAgents';
+import { CreateAgentPayload, useAgents, useCreateAgent, useDeleteAgent } from '@/hooks/useAgents';
 import { useModal } from '@/contexts/Modal';
 import { CreateAgentModal } from '@/components/studio/Agent/agent_create_modal';
 
@@ -58,7 +27,7 @@ export default function AgentsPage() {
   const handleCreateAgent = (name: string) => {
     if (!name.trim()) return;
 
-    createAgent.mutate(name, {
+    createAgent.mutate(name as any, {
       onSuccess: () => {
         // Refresh the list after successful creation
         refetch();
@@ -102,4 +71,3 @@ export default function AgentsPage() {
 
   return <CreateAgentModal handleCreateAgent={handleCreateAgent} />;
 }
-

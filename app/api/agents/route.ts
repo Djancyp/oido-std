@@ -23,6 +23,7 @@ export type Agent = {
   skills: string[];
   subagents: Agent[];
   system_prompt: string;
+  model?: string;
 };
 
 type CreateAgentBody = {
@@ -40,6 +41,10 @@ type UpdateAgentBody = {
   exclude_tools?: string[];
   clear_skills?: boolean;
   clear_exclude_tools?: boolean;
+  clear_system_prompt?: boolean;
+  clear_model?: boolean;
+  system_prompt?: string;
+  model?: string;
 };
 
 type DeleteAgentBody = {
@@ -120,16 +125,28 @@ export async function PATCH(req: NextRequest) {
 
     const flags: string[] = [];
 
-    if (body.clear_skills) {
-      flags.push('--clear-skills');
-    } else {
+    if (body.skills && body.skills.length > 0) {
       flags.push(...buildFlags('skills', body.skills));
+    } else if (body.clear_skills) {
+      flags.push('--clear-skills');
     }
 
-    if (body.clear_exclude_tools) {
-      flags.push('--clear-exclude-tools');
-    } else {
+    if (body.exclude_tools && body.exclude_tools.length > 0) {
       flags.push(...buildFlags('exclude-tools', body.exclude_tools));
+    } else if (body.clear_exclude_tools) {
+      flags.push('--clear-exclude-tools');
+    }
+
+    if (body.system_prompt) {
+      flags.push(`--system-prompt "${body.system_prompt.replace(/"/g, '\\"')}"`);
+    } else if (body.clear_system_prompt) {
+      flags.push('--clear-system-prompt');
+    }
+
+    if (body.model) {
+      flags.push(`--model "${body.model}"`);
+    } else if (body.clear_model) {
+      flags.push('--clear-model');
     }
 
     const command = [`${oido} agents update ${body.name}`, ...flags].join(' ');

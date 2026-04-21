@@ -187,12 +187,16 @@ export function AgentsProvider({
 
   // ── Effects ─────────────────────────────────────────────────────────────────
 
-  // Auto-select first agent
+  // Auto-select first agent + sync selectedAgent when data refreshes
   useEffect(() => {
-    if (data && data.length > 0 && !selectedAgent) {
+    if (!data || data.length === 0) return;
+    if (!selectedAgent) {
       setSelectedAgent(data[0]);
+    } else {
+      const updated = data.find(a => a.agent_id === selectedAgent.agent_id);
+      if (updated) setSelectedAgent(updated);
     }
-  }, [data, selectedAgent]);
+  }, [data]);
 
   // Seed tabs from agent.tab_ids and load full tab data
   useEffect(() => {

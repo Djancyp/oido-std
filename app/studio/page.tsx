@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { ChatWindow } from '@/components/studio/ChatBox';
 import { AppSidebar } from '@/components/studio/sidebar';
 

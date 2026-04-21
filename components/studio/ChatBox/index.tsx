@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useEffect, useRef } from 'react';
-import { Send, User, Bot, Loader2, Wrench, ChevronDown, ChevronRight } from 'lucide-react';
+import { Send, Square, User, Bot, Loader2, Wrench, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardFooter } from '@/components/ui/card';
@@ -11,10 +11,11 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import TopBar from './topbar';
 import { useAgents } from '@/contexts/Agents';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github-dark.css';
+import rehypeRaw from 'rehype-raw';
 
 /* =========================
    Types
@@ -81,7 +82,79 @@ function AssistantBubble({ msg, onAnswer }: AssistantBubbleProps) {
     setFreeText('');
     setSubmitting(false);
   };
+  const components: Components & {
+    thinking?: React.ElementType;
+  } = {
+    thinking: ({ children }: any) => (
+      <div className="flex flex-col gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        <Loader2 size={12} className="animate-spin" />
+        {children}
+      </div>
+    ),
+    h1: ({ ...props }) => <h1 className="text-xl font-bold mt-4 mb-2" {...props} />,
+    h2: ({ ...props }) => <h2 className="text-lg font-semibold mt-3 mb-2" {...props} />,
+    h3: ({ ...props }) => <h3 className="text-md font-semibold mt-2 mb-1" {...props} />,
 
+    p: ({ ...props }) => <p className="leading-relaxed mb-2" {...props} />,
+
+    ul: ({ ...props }) => <ul className="list-disc ml-5 space-y-1" {...props} />,
+    ol: ({ ...props }) => <ol className="list-decimal ml-5 space-y-1" {...props} />,
+
+    li: ({ ...props }) => <li className="ml-1" {...props} />,
+    div: ({ node, ...props }: any) => {
+      if (node?.properties?.['data-type'] === 'thinking') {
+        return (
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <Loader2 size={12} className="animate-spin" />
+            {props.children}
+          </div>
+        );
+      }
+      return <div {...props} />;
+    },
+
+    blockquote: ({ children, ...props }) => (
+      <blockquote
+        className="border-l-4 border-muted-foreground pl-3 italic text-muted-foreground"
+        {...props}
+      >
+        {children}
+      </blockquote>
+    ),
+
+    a: ({ ...props }) => <a className="text-blue-500 hover:underline" target="_blank" {...props} />,
+
+    hr: () => <hr className="my-4 border-muted" />,
+
+    code({ inline, className, children, ...props }: any) {
+      const match = /language-(\w+)/.exec(className || '');
+      return !inline && match ? (
+        <pre className="bg-zinc-900 rounded-lg p-4 overflow-x-auto">
+          <code className={className} {...props}>
+            {children}
+          </code>
+        </pre>
+      ) : (
+        <code className="bg-muted px-1.5 py-0.5 rounded text-xs" {...props}>
+          {children}
+        </code>
+      );
+    },
+
+    table: ({ ...props }) => (
+      <div className="overflow-x-auto my-3">
+        <table className="w-full border border-border text-sm" {...props} />
+      </div>
+    ),
+
+    thead: ({ ...props }) => <thead className="bg-muted" {...props} />,
+
+    th: ({ ...props }) => <th className="border px-3 py-2 text-left font-semibold" {...props} />,
+
+    td: ({ ...props }) => <td className="border px-3 py-2 align-top" {...props} />,
+
+    tr: ({ ...props }) => <tr className="even:bg-muted/40" {...props} />,
+  };
   return (
     <div className="flex flex-col gap-3 w-full">
       {/* Thinking */}
@@ -139,41 +212,8 @@ function AssistantBubble({ msg, onAnswer }: AssistantBubbleProps) {
         <div className="text-sm leading-relaxed bg-muted/50 border rounded-2xl rounded-tl-none px-4 py-2.5 shadow-sm">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeHighlight]}
-            components={{
-              code({ node, inline, className, children, ...props }: any) {
-                const match = /language-(\w+)/.exec(className || '');
-                return !inline && match ? (
-                  <pre className="bg-gray-900 rounded-md p-4 overflow-x-auto">
-                    <code className={className} {...props}>
-                      {children}
-                    </code>
-                  </pre>
-                ) : (
-                  <code className={className} {...props}>
-                    {children}
-                  </code>
-                );
-              },
-              table({ node, ...props }: any) {
-                return (
-                  <div className="overflow-x-auto">
-                    <table className="border-collapse border border-gray-300 w-full" {...props} />
-                  </div>
-                );
-              },
-              th({ node, ...props }: any) {
-                return (
-                  <th
-                    className="border border-gray-300 px-4 py-2 bg-gray-100 font-bold"
-                    {...props}
-                  />
-                );
-              },
-              td({ node, ...props }: any) {
-                return <td className="border border-gray-300 px-4 py-2" {...props} />;
-              },
-            }}
+            rehypePlugins={[rehypeHighlight, rehypeRaw]}
+            components={components as any}
           >
             {msg.content}
           </ReactMarkdown>
@@ -272,12 +312,14 @@ export function ChatWindow() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [currentSessionId, setCurrentSessionId] = React.useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = React.useState<number | null>(null);
+  const abortControllerRef = React.useRef<AbortController | null>(null);
 
-  const activeSession = sessions.find(s => s.id === activeTab) ?? sessions[0] ?? { id: '', title: '', messages: [] };
+  const activeSession = sessions.find(s => s.id === activeTab) ??
+    sessions[0] ?? { id: '', title: '', messages: [] };
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const agentInfo = selectedAgent
-    ? { name: selectedAgent.agent_name, model: 'openrouter/free' }
+    ? { name: selectedAgent.agent_name, model: selectedAgent.model ?? 'default' }
     : undefined;
 
   const loadedTabs = React.useRef<Set<string>>(new Set());
@@ -296,8 +338,10 @@ export function ChatWindow() {
 
         const data = isInitial
           ? initialConversation
-          : await fetch(`/api/sessions/tabs?agentId=${agentId}&tabId=${tabId}`)
-              .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
+          : await fetch(`/api/sessions/tabs?agentId=${agentId}&tabId=${tabId}`).then(r => {
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              return r.json();
+            });
 
         if (Array.isArray(data?.conversation)) {
           const messages: ChatMessage[] = data.conversation.map((conv: any, i: number) => ({
@@ -305,10 +349,13 @@ export function ChatWindow() {
             role: conv.role || conv.type,
             content: conv.content || conv.text || '',
             timestamp: conv.timestamp
-              ? new Date(conv.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              ? new Date(conv.timestamp).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
               : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           }));
-          setSessions(prev => prev.map(s => s.id === tabId ? { ...s, messages } : s));
+          setSessions(prev => prev.map(s => (s.id === tabId ? { ...s, messages } : s)));
         }
       } catch (err) {
         console.error('[history]', err);
@@ -323,24 +370,29 @@ export function ChatWindow() {
 
     const agentTabs = getTabsForAgent(selectedAgent.agent_id);
     // Fall back to tab_ids when context tabs haven't loaded yet
-    const tabList = agentTabs.length > 0
-      ? agentTabs
-      : (selectedAgent.tab_ids ?? []).map((id: string, i: number) => ({
-          id,
-          name: `Tab ${i + 1}`,
-          agentId: selectedAgent.agent_id,
-          createdAt: new Date(),
-        }));
+    const tabList =
+      agentTabs.length > 0
+        ? agentTabs
+        : (selectedAgent.tab_ids ?? []).map((id: string, i: number) => ({
+            id,
+            name: `Tab ${i + 1}`,
+            agentId: selectedAgent.agent_id,
+            createdAt: new Date(),
+          }));
 
     loadedTabs.current.clear();
 
-    const newSessions: ChatSession[] = tabList.map(t => ({ id: t.id, title: t.name, messages: [] }));
+    const newSessions: ChatSession[] = tabList.map(t => ({
+      id: t.id,
+      title: t.name,
+      messages: [],
+    }));
     setSessions(newSessions);
 
     const firstId = newSessions[0]?.id ?? '';
     setActiveTab(firstId);
     if (firstId) fetchTabHistory(selectedAgent.agent_id, firstId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAgent?.agent_id]);
 
   /* ── When TopBar tab is clicked: lazy-load history ── */
@@ -395,6 +447,12 @@ export function ChatWindow() {
   };
 
   /* ── Send message ── */
+  const handleStop = () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setIsLoading(false);
+  };
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
@@ -409,10 +467,14 @@ export function ChatWindow() {
     setInputValue('');
     setIsLoading(true);
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           message: inputValue.trim(),
           sessionId: currentSessionId ?? undefined,
@@ -423,6 +485,7 @@ export function ChatWindow() {
         }),
       });
 
+			console.log(res)
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const reader = res.body?.getReader();
       if (!reader) throw new Error('no reader');
@@ -517,7 +580,8 @@ export function ChatWindow() {
           }
         }
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
       console.error('[send]', err);
       appendMessage({
         id: generateId(),
@@ -526,6 +590,8 @@ export function ChatWindow() {
         timestamp: generateTimestamp(),
       });
       setIsLoading(false);
+    } finally {
+      abortControllerRef.current = null;
     }
   };
 
@@ -577,7 +643,7 @@ export function ChatWindow() {
         agentInfo={agentInfo}
       />
 
-      <ScrollArea className="flex-1 px-4 h-[calc(100vh-10rem)]">
+      <ScrollArea className="flex-1 px-4 min-h-0">
         <div className="max-w-7xl mx-auto space-y-8">
           {activeSession.messages.map((msg, index) => (
             <div
@@ -630,24 +696,41 @@ export function ChatWindow() {
         </div>
       </ScrollArea>
 
-      <CardFooter className="border-t p-4 bg-muted/10">
-        <div className="flex w-full max-w-3xl mx-auto items-center gap-3">
-          <Input
+      <CardFooter className="border-t p-4 bg-muted/10 shrink-0">
+        <div className="flex w-full max-w-3xl mx-auto items-end gap-3">
+          <textarea
             placeholder="Ready for next command..."
-            className="h-12 bg-background rounded-xl shadow-inner border-muted-foreground/20"
+            className="flex-1 min-h-[48px] resize-none bg-background rounded-xl shadow-inner border border-muted-foreground/20 px-3 py-3 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
             value={inputValue}
-            onChange={e => setInputValue(e.target.value)}
+            rows={1}
+            style={{ height: '48px' }}
+            onChange={e => {
+              setInputValue(e.target.value);
+              e.target.style.height = '48px';
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 84)}px`;
+            }}
             onKeyDown={handleKeyPress}
             disabled={isLoading}
           />
-          <Button
-            size="icon"
-            className="h-12 w-12 rounded-xl active:scale-95 transition-transform"
-            onClick={handleSendMessage}
-            disabled={isLoading || !inputValue.trim()}
-          >
-            <Send size={20} />
-          </Button>
+          {isLoading ? (
+            <Button
+              size="icon"
+              variant="destructive"
+              className="h-12 w-12 rounded-xl active:scale-95 transition-transform shrink-0"
+              onClick={handleStop}
+            >
+              <Square size={16} fill="currentColor" />
+            </Button>
+          ) : (
+            <Button
+              size="icon"
+              className="h-12 w-12 rounded-xl active:scale-95 transition-transform shrink-0"
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim()}
+            >
+              <Send size={20} />
+            </Button>
+          )}
         </div>
       </CardFooter>
     </Card>

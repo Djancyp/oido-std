@@ -1,10 +1,11 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader } from '@/components/ui/sidebar';
 import { AgentsApi } from './agents-api';
-import { SearchSelect } from '../ModelSelector';
-import { Plus } from 'lucide-react';
 import FooterNav from './footer_nav';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
-export function AppSidebar() {
+export async function AppSidebar() {
+  const session = await getServerSession(authOptions);
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-slate-200">
@@ -16,7 +17,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-slate-200">
-        <FooterNav />
+        <FooterNav user={session?.user ?? null} />
       </SidebarFooter>
     </Sidebar>
   );

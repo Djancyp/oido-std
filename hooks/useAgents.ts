@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Agent } from '@/app/api/agents/route';
+import { apiFetch } from '@/lib/server-fetch';
 
 export const agentKeys = {
   all: ['agents'] as const,
@@ -10,7 +11,7 @@ export const agentKeys = {
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 export async function fetchAgents(): Promise<Agent[]> {
-  const response = await fetch(`${baseUrl}/api/agents`);
+  const response = await apiFetch(`${baseUrl}/api/agents`);
   if (!response.ok) return [];
   return response.json();
 }
@@ -25,7 +26,7 @@ export type RawSession = {
 
 export async function fetchAllSessions(): Promise<RawSession[]> {
   try {
-    const response = await fetch(`${baseUrl}/api/sessions/list`);
+    const response = await apiFetch(`${baseUrl}/api/sessions/list`);
     if (!response.ok) return [];
     return response.json();
   } catch {
@@ -44,7 +45,7 @@ export async function fetchTabConversation(
   tabId: string
 ): Promise<RawTabConversation | null> {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${baseUrl}/api/sessions/tabs?agentId=${agentId}&tabId=${tabId}`
     );
     if (!response.ok) return null;
@@ -98,6 +99,8 @@ export function useAgentsQuery(options?: { initialData?: Agent[] }) {
     queryKey: agentKeys.list(),
     queryFn: fetchAgents,
     initialData: options?.initialData,
+    initialDataUpdatedAt: options?.initialData ? Date.now() : undefined,
+    staleTime: 30_000,
   });
 }
 

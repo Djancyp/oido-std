@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skill } from '@/app/api/skills/route';
+import { apiFetch } from '@/lib/server-fetch';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
 export async function fetchSkills(): Promise<Skill[]> {
-  const res = await fetch(`${baseUrl}/api/skills`);
+  const res = await apiFetch(`${baseUrl}/api/skills`);
   if (!res.ok) return [];
   return res.json();
 }

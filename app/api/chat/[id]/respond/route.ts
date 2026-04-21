@@ -2,6 +2,8 @@
 import { NextRequest } from 'next/server';
 import { waiters } from '@/lib/waiters';
 
+export const runtime = 'nodejs';
+
 type RespondRequest = {
   answer: string;
 };

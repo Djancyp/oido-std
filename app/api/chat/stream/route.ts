@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server';
-import * as pty from 'node-pty';
 import { waiters } from '@/lib/waiters';
 
 export const runtime = 'nodejs';
@@ -24,7 +23,7 @@ export async function POST(req: NextRequest) {
   if (!body.message) {
     return new Response(JSON.stringify({ error: 'message is required' }), { status: 400 });
   }
-
+  const pty = await import('node-pty');
   const conversationId = body.conversationId ?? Date.now();
   const encoder = new TextEncoder();
 
