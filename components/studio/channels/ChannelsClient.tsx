@@ -124,12 +124,22 @@ function ChannelCard({ channel }: { channel: Channel }) {
   );
 }
 
+const POLICY_OPTIONS = ['pairing', 'open', 'allowlist'] as const;
+const SCOPE_OPTIONS = ['user', 'thread', 'single'] as const;
+const DISPATCH_OPTIONS = ['steer', 'collect', 'followup'] as const;
+
 function NewChannelForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
   const configure = useConfigureChannelMutation();
   const [type, setType] = useState<ChannelType>('telegram');
   const [name, setName] = useState('');
   const fields = CONFIG_FIELDS[type] ?? [];
   const [values, setValues] = useState<Record<string, string>>({});
+  const [model, setModel] = useState('');
+  const [instructions, setInstructions] = useState('');
+  const [policy, setPolicy] = useState('pairing');
+  const [scope, setScope] = useState('user');
+  const [dispatch, setDispatch] = useState('steer');
+  const [allow, setAllow] = useState('');
 
   React.useEffect(() => {
     setValues(Object.fromEntries(fields.map(f => [f.key, ''])));
@@ -137,7 +147,17 @@ function NewChannelForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
 
   const handleSave = async () => {
     if (!name.trim()) return;
-    await configure.mutateAsync({ channel: name.trim(), type, settings: values });
+    await configure.mutateAsync({
+      channel: name.trim(),
+      type,
+      settings: values,
+      model: model.trim() || undefined,
+      instructions: instructions.trim() || undefined,
+      policy,
+      scope,
+      dispatch,
+      allow: allow.trim() || undefined,
+    });
     onSuccess();
   };
 
@@ -145,7 +165,7 @@ function NewChannelForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
     <Card className="p-4 flex flex-col gap-3 border-dashed">
       <p className="text-xs font-semibold">New Channel</p>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {SUPPORTED_TYPES.map(t => (
           <button
             key={t}
@@ -179,6 +199,78 @@ function NewChannelForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
           />
         </div>
       ))}
+
+      <div className="border-t pt-3 flex flex-col gap-3">
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Behaviour</p>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium">Policy</label>
+          <div className="flex gap-1 flex-wrap">
+            {POLICY_OPTIONS.map(o => (
+              <button key={o} onClick={() => setPolicy(o)}
+                className={`text-xs px-2 py-1 rounded border font-mono transition-colors ${policy === o ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-muted border-input'}`}>
+                {o}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium">Session Scope</label>
+          <div className="flex gap-1 flex-wrap">
+            {SCOPE_OPTIONS.map(o => (
+              <button key={o} onClick={() => setScope(o)}
+                className={`text-xs px-2 py-1 rounded border font-mono transition-colors ${scope === o ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-muted border-input'}`}>
+                {o}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium">Dispatch Mode</label>
+          <div className="flex gap-1 flex-wrap">
+            {DISPATCH_OPTIONS.map(o => (
+              <button key={o} onClick={() => setDispatch(o)}
+                className={`text-xs px-2 py-1 rounded border font-mono transition-colors ${dispatch === o ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-muted border-input'}`}>
+                {o}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium">Model <span className="text-muted-foreground font-normal">(optional)</span></label>
+          <Input
+            placeholder="e.g. gemini-2.5-flash"
+            value={model}
+            onChange={e => setModel(e.target.value)}
+            className="h-8 text-xs font-mono"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium">Instructions <span className="text-muted-foreground font-normal">(optional)</span></label>
+          <textarea
+            placeholder="System prompt / instructions for the AI on this channel"
+            value={instructions}
+            onChange={e => setInstructions(e.target.value)}
+            className="min-h-[64px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-mono resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          />
+        </div>
+
+        {policy === 'allowlist' && (
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium">Allowed User IDs <span className="text-muted-foreground font-normal">(comma-separated)</span></label>
+            <Input
+              placeholder="user1,user2"
+              value={allow}
+              onChange={e => setAllow(e.target.value)}
+              className="h-8 text-xs font-mono"
+            />
+          </div>
+        )}
+      </div>
 
       <div className="flex gap-2">
         <Button size="sm" onClick={handleSave} disabled={configure.isPending || !name.trim()}>
