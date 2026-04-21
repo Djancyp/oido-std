@@ -68,7 +68,8 @@ export async function POST(req: NextRequest) {
       }
       console.log('[DEBUG][ARGS] ', args);
 
-      const child = pty.spawn('/home/djan/Documents/codding/agent-cli/oido-cli/oido', args, {
+      const oido = process.env.OIDO_PATH || 'oido';
+      const child = pty.spawn(oido, args, {
         name: 'xterm-256color',
         cols: 10000,
         rows: 50,
