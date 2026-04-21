@@ -75,7 +75,7 @@ async function createAgent(payload: CreateAgentPayload) {
 
 // --- ADD THESE TWO API CALLERS ---
 async function updateAgent({ name, data }: { name: string; data: any }) {
-  const response = await fetch('/api/agents', {
+  const response = await apiFetch('/api/agents', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, ...data }),
@@ -84,7 +84,7 @@ async function updateAgent({ name, data }: { name: string; data: any }) {
 }
 
 async function deleteAgent(name: string) {
-  const response = await fetch('/api/agents', {
+  const response = await apiFetch('/api/agents', {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),

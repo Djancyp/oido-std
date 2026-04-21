@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Channel } from '@/app/api/channels/route';
 import { PairingRequest } from '@/app/api/channels/pairing/route';
+import { apiFetch } from '@/lib/server-fetch';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
@@ -11,7 +12,7 @@ const channelKeys = {
 };
 
 export async function fetchChannels(): Promise<Channel[]> {
-  const res = await fetch(`${baseUrl}/api/channels`);
+  const res = await apiFetch(`${baseUrl}/api/channels`);
   if (!res.ok) return [];
   return res.json();
 }
@@ -30,7 +31,7 @@ export function usePairingQuery() {
 }
 
 async function fetchPairing(): Promise<PairingRequest[]> {
-  const res = await fetch(`${baseUrl}/api/channels/pairing`);
+  const res = await apiFetch(`${baseUrl}/api/channels/pairing`);
   if (!res.ok) return [];
   return res.json();
 }
@@ -39,7 +40,7 @@ export function useStartChannelMutation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (channel: string) =>
-      fetch('/api/channels/start', {
+      apiFetch('/api/channels/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ channel }),

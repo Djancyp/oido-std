@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pipeline, PipelineListItem, PipelineNode } from '@/app/api/pipelines/route';
 import { PipelineScheduleItem } from '@/app/api/pipelines/schedule/route';
 import { PipelineTool } from '@/app/api/pipelines/tools/route';
+import { apiFetch } from '@/lib/server-fetch';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
@@ -15,19 +16,19 @@ const keys = {
 };
 
 export async function fetchPipelines(): Promise<PipelineListItem[]> {
-  const res = await fetch(`${baseUrl}/api/pipelines`);
+  const res = await apiFetch(`${baseUrl}/api/pipelines`);
   if (!res.ok) return [];
   return res.json();
 }
 
 export async function fetchPipelineDetail(name: string): Promise<Pipeline> {
-  const res = await fetch(`${baseUrl}/api/pipelines/${name}`);
+  const res = await apiFetch(`${baseUrl}/api/pipelines/${name}`);
   if (!res.ok) throw new Error('Failed to fetch pipeline');
   return res.json();
 }
 
 export async function fetchPipelineTools(): Promise<PipelineTool[]> {
-  const res = await fetch(`${baseUrl}/api/pipelines/tools`);
+  const res = await apiFetch(`${baseUrl}/api/pipelines/tools`);
   if (!res.ok) return [];
   return res.json();
 }

@@ -27,7 +27,7 @@ export function useSkillsQuery(options?: { initialData?: Skill[] }) {
 export function useSkillDetail(name: string) {
   return useQuery({
     queryKey: skillKeys.detail(name),
-    queryFn: () => fetch(`/api/skills/${encodeURIComponent(name)}`).then(r => r.json()),
+    queryFn: () => apiFetch(`/api/skills/${encodeURIComponent(name)}`).then(r => r.json()),
     enabled: !!name,
   });
 }
@@ -44,7 +44,7 @@ export function useCreateSkill() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: SkillPayload) =>
-      fetch('/api/skills', {
+      apiFetch('/api/skills', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -57,7 +57,7 @@ export function useUpdateSkill() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ name, ...rest }: SkillPayload) =>
-      fetch(`/api/skills/${encodeURIComponent(name)}`, {
+      apiFetch(`/api/skills/${encodeURIComponent(name)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(rest),
@@ -73,7 +73,7 @@ export function useDeleteSkill() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (name: string) =>
-      fetch(`/api/skills/${encodeURIComponent(name)}`, { method: 'DELETE' }).then(r => r.json()),
+      apiFetch(`/api/skills/${encodeURIComponent(name)}`, { method: 'DELETE' }).then(r => r.json()),
     onSuccess: () => qc.invalidateQueries({ queryKey: skillKeys.list() }),
   });
 }
