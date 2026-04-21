@@ -22,10 +22,11 @@ export async function GET() {
   try {
     const oido = getOido();
     const stdout = await runCmd(`${oido} channel status --json`);
-    const statuses: ChannelStatus[] = JSON.parse(stdout);
+    let statuses: ChannelStatus[] = [];
+    try { statuses = JSON.parse(stdout.trim()); } catch {}
     return NextResponse.json<ChannelStatus[]>(statuses);
   } catch (err: any) {
     console.error('Error in GET /api/channels/status:', err);
-    return NextResponse.json({ error: err.message || 'Failed to fetch channel status' }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }

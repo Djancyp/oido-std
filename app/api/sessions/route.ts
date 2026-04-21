@@ -23,12 +23,13 @@ export async function GET() {
     const oido = process.env.OIDO_PATH;
     if (!oido) throw new Error('OIDO_PATH is not defined');
 
-    const stdout = await runCmd(`${oido} session list --json`);
-    const sessions: Sessions = JSON.parse(stdout);
+    const stdout = await runCmd(`${oido} sessions list --json`);
+    let sessions: Sessions = [];
+    try { sessions = JSON.parse(stdout.trim()); } catch {}
 
     return NextResponse.json<Sessions>(sessions);
   } catch (err: any) {
-    console.error('Error in GET /api/models:', err);
-    return NextResponse.json({ error: err.message || 'Failed to fetch models' }, { status: 500 });
+    console.error('Error in GET /api/sessions:', err);
+    return NextResponse.json([], { status: 200 });
   }
 }

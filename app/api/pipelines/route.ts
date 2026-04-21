@@ -43,10 +43,12 @@ export async function GET() {
   try {
     const oido = getOido();
     const stdout = await runCmd(`${oido} pipelines list --json`);
-    const pipelines: PipelineListItem[] = JSON.parse(stdout);
+    let pipelines: PipelineListItem[] = [];
+    try { pipelines = JSON.parse(stdout.trim()); } catch {}
     return NextResponse.json(pipelines);
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('Error in GET /api/pipelines:', err);
+    return NextResponse.json([], { status: 200 });
   }
 }
 

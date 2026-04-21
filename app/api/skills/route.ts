@@ -27,10 +27,12 @@ export async function GET() {
     const trimmed = stdout.trim();
     // CLI prints plain text when no skills exist
     if (!trimmed.startsWith('[')) return NextResponse.json<Skill[]>([]);
-    return NextResponse.json<Skill[]>(JSON.parse(trimmed));
+    let skills: Skill[] = [];
+    try { skills = JSON.parse(trimmed); } catch {}
+    return NextResponse.json<Skill[]>(skills);
   } catch (err: any) {
     console.error('GET /api/skills:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }
 

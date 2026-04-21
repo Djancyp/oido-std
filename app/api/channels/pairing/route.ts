@@ -23,11 +23,12 @@ export async function GET() {
   try {
     const oido = getOido();
     const stdout = await runCmd(`${oido} channel pairing list --json`);
-    const requests: PairingRequest[] = JSON.parse(stdout);
+    let requests: PairingRequest[] = [];
+    try { requests = JSON.parse(stdout.trim()); } catch {}
     return NextResponse.json<PairingRequest[]>(requests);
   } catch (err: any) {
     console.error('Error in GET /api/channels/pairing:', err);
-    return NextResponse.json({ error: err.message || 'Failed to fetch pairing requests' }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }
 

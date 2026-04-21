@@ -12,7 +12,8 @@ export async function GET() {
     if (!oido) throw new Error('OIDO_PATH is not defined');
 
     const stdout = await runCmd(`${oido} models list --json`);
-    const models: ModelResponse = JSON.parse(stdout);
+    let models: ModelResponse = { activeProviders: [], providers: [], total: 0 };
+    try { models = JSON.parse(stdout.trim()); } catch {}
 
     return NextResponse.json<ModelResponse>(models);
   } catch (err: any) {

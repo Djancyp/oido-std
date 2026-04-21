@@ -61,11 +61,12 @@ export async function GET() {
     const oido = getOido();
 
     const stdout = await runCmd(`${oido} extensions list --json`);
-    const extensions: Extension[] = JSON.parse(stdout);
+    let extensions: Extension[] = [];
+    try { extensions = JSON.parse(stdout.trim()); } catch {}
 
     return NextResponse.json<Extension[]>(extensions);
   } catch (err: any) {
     console.error('Error in GET /api/extensions:', err);
-    return NextResponse.json({ error: err.message || 'Failed to fetch extensions' }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }

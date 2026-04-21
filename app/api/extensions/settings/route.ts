@@ -42,8 +42,10 @@ export async function GET(req: NextRequest) {
       if (!oido) throw new Error('OIDO_PATH is not defined');
       
       const stdout = await runCmd(`${oido} extensions settings list ${name} --json`);
+      let parsed: unknown = {};
+      try { parsed = JSON.parse(stdout.trim()); } catch {}
 
-      return NextResponse.json(JSON.parse(stdout));
+      return NextResponse.json(parsed);
     }
 
     if (name && key) {

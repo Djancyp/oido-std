@@ -8,9 +8,12 @@ const OIDO = process.env.OIDO_BIN || '/home/djan/Documents/codding/agent-cli/oid
 export async function GET() {
   try {
     const { stdout } = await exec(OIDO, ['auth', 'status', '--json']);
-    return NextResponse.json(JSON.parse(stdout));
+    let parsed: unknown = {};
+    try { parsed = JSON.parse(stdout.trim()); } catch {}
+    return NextResponse.json(parsed);
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('Error in GET /api/providers:', err);
+    return NextResponse.json({}, { status: 200 });
   }
 }
 

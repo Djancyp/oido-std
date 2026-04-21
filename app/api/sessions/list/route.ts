@@ -43,8 +43,8 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Parse and return the response
-    const sessions = JSON.parse(stdout);
+    let sessions: unknown[] = [];
+    try { sessions = JSON.parse(stdout.trim()); } catch {}
 
     return new Response(JSON.stringify(sessions), {
       status: 200,
@@ -52,10 +52,10 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error in GET /api/sessions/list:', error);
-    return new Response(
-      JSON.stringify({ error: 'Failed to retrieve sessions', details: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify([]), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
 

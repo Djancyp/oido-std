@@ -37,14 +37,15 @@ export async function GET() {
     const execAsync = promisify(exec);
 
     const { stdout } = await execAsync(`${oido} tools list --json`);
-    const tools: ToolsResponse = JSON.parse(stdout);
+    let tools: ToolsResponse = { builtin: [], extension: [], mcp: [] };
+    try { tools = JSON.parse(stdout.trim()); } catch {}
 
     return NextResponse.json<ToolsResponse>(tools);
   } catch (err: any) {
     console.error('Error in GET /api/tools:', err);
     return NextResponse.json(
-      { error: err.message || 'Failed to fetch tools' },
-      { status: 500 }
+      { builtin: [], extension: [], mcp: [] } satisfies ToolsResponse,
+      { status: 200 }
     );
   }
 }

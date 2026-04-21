@@ -60,16 +60,13 @@ export async function GET() {
     if (!oido) throw new Error('OIDO_PATH is not defined');
 
     const stdout = await runCmd(`${oido} agents list --json`);
-		// check if its a text
-		// if (stdout.startsWith('')) {
-		// 	return NextResponse.json<Agent[]>([]);
-		// }
-    const agents: Agent[] = JSON.parse(stdout);
+    let agents: Agent[] = [];
+    try { agents = JSON.parse(stdout.trim()); } catch {}
 
     return NextResponse.json<Agent[]>(agents);
   } catch (err: any) {
     console.error('Error in GET /api/agents:', err);
-    return NextResponse.json({ error: err.message || 'Failed to fetch agents' }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }
 

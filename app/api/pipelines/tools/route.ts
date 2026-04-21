@@ -29,9 +29,11 @@ export async function GET() {
     const { exec } = await import('child_process');
     const { promisify } = await import('util');
     const { stdout } = await promisify(exec)(`${oido} pipelines tools`);
-    const tools: PipelineTool[] = JSON.parse(stdout);
+    let tools: PipelineTool[] = [];
+    try { tools = JSON.parse(stdout.trim()); } catch {}
     return NextResponse.json(tools);
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('Error in GET /api/pipelines/tools:', err);
+    return NextResponse.json([], { status: 200 });
   }
 }

@@ -27,10 +27,11 @@ export async function GET() {
   try {
     const oido = getOido();
     const stdout = await runCmd(`${oido} channel list --json`);
-    const channels: Channel[] = JSON.parse(stdout);
+    let channels: Channel[] = [];
+    try { channels = JSON.parse(stdout.trim()); } catch {}
     return NextResponse.json<Channel[]>(channels);
   } catch (err: any) {
     console.error('Error in GET /api/channels:', err);
-    return NextResponse.json({ error: err.message || 'Failed to fetch channels' }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }
