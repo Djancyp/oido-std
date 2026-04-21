@@ -30,15 +30,15 @@ export function GlobalModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
-      <DialogContent className={cn(sizeClasses[config.size || 'md'], 'overflow-y-auto')}>
-        <DialogHeader>
+      <DialogContent className={cn(sizeClasses[config.size || 'md'], 'flex flex-col max-h-[85vh]')}>
+        <DialogHeader className="shrink-0">
           {config.title && <DialogTitle>{config.title}</DialogTitle>}
           {config.description && <DialogDescription>{config.description}</DialogDescription>}
         </DialogHeader>
 
-        <div className="py-4">{config.content}</div>
+        <div className="flex-1 overflow-y-auto py-4 min-h-0">{config.content}</div>
 
-        {config.footer && <DialogFooter>{config.footer}</DialogFooter>}
+        {config.footer && <DialogFooter className="shrink-0">{config.footer}</DialogFooter>}
       </DialogContent>
     </Dialog>
   );
