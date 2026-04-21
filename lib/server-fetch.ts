@@ -1,16 +1,25 @@
 /**
  * Drop-in fetch replacement for hooks that run both server-side and client-side.
- * On server: rewrites the base URL to the internal localhost address to avoid
- *   TLS issues with self-signed certs on the public domain.
- * On client: plain fetch (session cookie sent automatically by the browser).
+ *
+ * Server-side: always hits http://localhost:PORT so we never do TLS against a
+ *   self-signed cert on the public domain.
+ *
+ * Client-side: strips the origin and uses a relative path (/api/...) so the
+ *   browser sends the request to whatever domain it is already on — no
+ *   hardcoded localhost or domain in the bundle.
  */
 
 const INTERNAL_BASE = process.env.INTERNAL_BASE_URL ?? 'http://localhost:3000';
-const PUBLIC_BASE = process.env.NEXT_PUBLIC_BASE_URL ?? '';
 
 function toInternalUrl(url: string): string {
-  if (!PUBLIC_BASE) return url;
-  return url.startsWith(PUBLIC_BASE) ? INTERNAL_BASE + url.slice(PUBLIC_BASE.length) : url;
+  // Replace any origin (http://localhost:3000, https://oido.bruna-tech.com, …)
+  // with the internal base so Node never dials out over TLS.
+  return url.replace(/^https?:\/\/[^/]+/, INTERNAL_BASE);
+}
+
+function toRelativeUrl(url: string): string {
+  // Strip origin so the browser uses the current host — works locally and in prod.
+  return url.replace(/^https?:\/\/[^/]+/, '');
 }
 
 export function apiFetch(url: string, init?: RequestInit): Promise<Response> {
@@ -24,5 +33,5 @@ export function apiFetch(url: string, init?: RequestInit): Promise<Response> {
       cache: 'no-store',
     });
   }
-  return fetch(url, init);
+  return fetch(toRelativeUrl(url), init);
 }
