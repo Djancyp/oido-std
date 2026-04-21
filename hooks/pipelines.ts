@@ -46,7 +46,7 @@ export function usePipelineToolsQuery(options?: { initialData?: PipelineTool[] }
 }
 
 export async function fetchSchedules(): Promise<PipelineScheduleItem[]> {
-  const res = await fetch(`${baseUrl}/api/pipelines/schedule`);
+  const res = await apiFetch(`${baseUrl}/api/pipelines/schedule`);
   if (!res.ok) return [];
   return res.json();
 }
