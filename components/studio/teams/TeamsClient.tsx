@@ -105,29 +105,29 @@ function CreateUserForm({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4 border rounded-lg bg-muted/10">
+    <div className="flex flex-col gap-4 p-4 rounded-xl border border-border/50 bg-card shadow-sm">
       <p className="text-sm font-semibold">New User</p>
       {error && <p className="text-xs text-destructive">{error}</p>}
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium">Name</label>
-          <Input autoFocus value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="h-8 text-xs" placeholder="Jane Doe" />
+          <label className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">Name</label>
+          <Input autoFocus value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="h-8 text-xs border-border/50 bg-muted/20 focus-visible:ring-indigo-500/30 focus-visible:border-indigo-500/50" placeholder="Jane Doe" />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium">Email</label>
-          <Input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="h-8 text-xs" type="email" placeholder="jane@example.com" />
+          <label className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">Email</label>
+          <Input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="h-8 text-xs border-border/50 bg-muted/20 focus-visible:ring-indigo-500/30 focus-visible:border-indigo-500/50" type="email" placeholder="jane@example.com" />
         </div>
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium">Password</label>
-        <Input value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} className="h-8 text-xs" type="password" placeholder="Temporary password" />
+        <label className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">Password</label>
+        <Input value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} className="h-8 text-xs border-border/50 bg-muted/20 focus-visible:ring-indigo-500/30 focus-visible:border-indigo-500/50" type="password" placeholder="Temporary password" />
       </div>
       <div className="flex gap-2">
-        <Button size="sm" onClick={handleSubmit} disabled={mutation.isPending}>
-          {mutation.isPending ? <Loader2 size={13} className="animate-spin mr-1" /> : <Plus size={13} className="mr-1" />}
+        <Button size="sm" className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm" onClick={handleSubmit} disabled={mutation.isPending}>
+          {mutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
           Create User
         </Button>
-        <Button variant="ghost" size="sm" onClick={onDone}>Cancel</Button>
+        <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={onDone}>Cancel</Button>
       </div>
     </div>
   );
@@ -174,7 +174,7 @@ function RolePicker({ user, allRoles, onClose }: { user: TeamUser; allRoles: Rol
   };
 
   return (
-    <div className="flex flex-col gap-2 p-3 border rounded-lg bg-background shadow-md w-56">
+    <div className="flex flex-col gap-2 rounded-xl border border-border/50 bg-card shadow-lg p-3 w-56">
       <p className="text-xs font-semibold">Roles for {user.name}</p>
       <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
         {allRoles.map(role => (
@@ -182,8 +182,10 @@ function RolePicker({ user, allRoles, onClose }: { user: TeamUser; allRoles: Rol
             key={role.id}
             onClick={() => toggle(role.id)}
             className={cn(
-              'flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left transition-colors',
-              selected.includes(role.id) ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+              'flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-left transition-colors',
+              selected.includes(role.id)
+                ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/15'
+                : 'hover:bg-muted'
             )}
           >
             <Check size={11} className={selected.includes(role.id) ? 'opacity-100' : 'opacity-0'} />
@@ -193,7 +195,7 @@ function RolePicker({ user, allRoles, onClose }: { user: TeamUser; allRoles: Rol
         {allRoles.length === 0 && <p className="text-xs text-muted-foreground italic px-2">No roles yet.</p>}
       </div>
       <div className="flex gap-1.5 pt-1 border-t">
-        <Button size="sm" className="h-6 text-[11px] flex-1" onClick={handleSave} disabled={mutation.isPending}>
+        <Button size="sm" className="h-6 text-[11px] flex-1 bg-indigo-600 hover:bg-indigo-500 text-white" onClick={handleSave} disabled={mutation.isPending}>
           {mutation.isPending ? <Loader2 size={11} className="animate-spin mr-1" /> : null} Save
         </Button>
         <Button size="sm" variant="ghost" className="h-6 text-[11px]" onClick={onClose}>Cancel</Button>
@@ -214,24 +216,24 @@ function UsersTab({ initialUsers, allRoles }: { initialUsers: TeamUser[]; allRol
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{users.length} user{users.length !== 1 ? 's' : ''}</p>
-        <Button size="sm" onClick={() => setShowCreate(v => !v)}>
-          <Plus size={13} className="mr-1" /> Add User
+        <Button size="sm" className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm" onClick={() => setShowCreate(v => !v)}>
+          <Plus size={13} /> Add User
         </Button>
       </div>
 
       {showCreate && <CreateUserForm onDone={() => setShowCreate(false)} />}
 
-      <div className="flex flex-col divide-y rounded-lg border overflow-hidden">
+      <div className="flex flex-col gap-2">
         {users.map(user => (
-          <div key={user.id} className="relative">
+          <div key={user.id} className="relative group rounded-xl border border-border/40 overflow-hidden bg-card hover:border-border/60 transition-all duration-150">
             {editingId === user.id ? (
               <div className="px-4">
                 <EditUserRow user={user} onDone={() => setEditingId(null)} />
               </div>
             ) : (
               <div className="flex items-center gap-3 px-4 py-3">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="text-xs font-semibold text-primary">{user.name[0].toUpperCase()}</span>
+                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/15 flex items-center justify-center shrink-0">
+                  <span className="text-xs font-semibold text-indigo-400">{user.name[0].toUpperCase()}</span>
                 </div>
                 <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                   <span className="text-sm font-medium">{user.name}</span>
@@ -239,9 +241,9 @@ function UsersTab({ initialUsers, allRoles }: { initialUsers: TeamUser[]; allRol
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {user.roles.map(r => (
-                    <Badge key={r.id} variant="secondary" className="text-[10px] font-mono">{r.name}</Badge>
+                    <span key={r.id} className="text-[10px] font-mono bg-indigo-500/8 text-indigo-400 border border-indigo-500/15 px-1.5 py-0.5 rounded-md">{r.name}</span>
                   ))}
-                  {user.roles.length === 0 && <span className="text-[11px] text-muted-foreground italic">no roles</span>}
+                  {user.roles.length === 0 && <span className="text-[11px] text-muted-foreground/40 italic">no roles</span>}
                 </div>
                 <div className="flex items-center gap-1 ml-2 shrink-0">
                   <Button
@@ -273,7 +275,15 @@ function UsersTab({ initialUsers, allRoles }: { initialUsers: TeamUser[]; allRol
           </div>
         ))}
         {users.length === 0 && (
-          <p className="text-sm text-muted-foreground italic px-4 py-6 text-center">No users yet.</p>
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border/40 flex items-center justify-center">
+              <Users size={20} className="text-muted-foreground/40" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">No users yet</p>
+              <p className="text-xs text-muted-foreground/60 mt-0.5">Create a user to get started</p>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -301,54 +311,64 @@ function RolesTab({ initialRoles }: { initialRoles: Role[] }) {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{roles.length} role{roles.length !== 1 ? 's' : ''}</p>
-        <Button size="sm" onClick={() => setShowForm(v => !v)}>
-          <Plus size={13} className="mr-1" /> Add Role
+        <Button size="sm" className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm" onClick={() => setShowForm(v => !v)}>
+          <Plus size={13} /> Add Role
         </Button>
       </div>
 
       {showForm && (
-        <div className="flex flex-col gap-3 p-4 border rounded-lg bg-muted/10">
+        <div className="flex flex-col gap-4 p-4 rounded-xl border border-border/50 bg-card shadow-sm">
           <p className="text-sm font-semibold">New Role</p>
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium">Name</label>
-            <Input autoFocus value={name} onChange={e => setName(e.target.value)} className="h-8 text-xs font-mono" placeholder="admin" />
+            <label className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">Name</label>
+            <Input autoFocus value={name} onChange={e => setName(e.target.value)} className="h-8 text-xs font-mono border-border/50 bg-muted/20 focus-visible:ring-indigo-500/30 focus-visible:border-indigo-500/50" placeholder="admin" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium">Description</label>
-            <Input value={description} onChange={e => setDescription(e.target.value)} className="h-8 text-xs" placeholder="Full administrative access" />
+            <label className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">Description</label>
+            <Input value={description} onChange={e => setDescription(e.target.value)} className="h-8 text-xs border-border/50 bg-muted/20 focus-visible:ring-indigo-500/30 focus-visible:border-indigo-500/50" placeholder="Full administrative access" />
           </div>
           <div className="flex gap-2">
-            <Button size="sm" onClick={handleCreate} disabled={createMutation.isPending}>
-              {createMutation.isPending ? <Loader2 size={13} className="animate-spin mr-1" /> : <Plus size={13} className="mr-1" />}
+            <Button size="sm" className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm" onClick={handleCreate} disabled={createMutation.isPending}>
+              {createMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
               Create Role
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => { setShowForm(false); setError(''); }}>Cancel</Button>
+            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setShowForm(false); setError(''); }}>Cancel</Button>
           </div>
         </div>
       )}
 
-      <div className="flex flex-col divide-y rounded-lg border overflow-hidden">
+      <div className="flex flex-col gap-2">
         {roles.map(role => (
-          <div key={role.id} className="flex items-center gap-3 px-4 py-3">
-            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-              <ShieldCheck size={14} className="text-muted-foreground" />
+          <div key={role.id} className="group rounded-xl border border-border/40 overflow-hidden bg-card hover:border-border/60 transition-all duration-150">
+            <div className="flex items-center gap-3 px-4 py-3">
+              <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/15 flex items-center justify-center shrink-0">
+                <ShieldCheck size={14} className="text-violet-400" />
+              </div>
+              <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                <span className="text-sm font-mono font-medium">{role.name}</span>
+                {role.description && <span className="text-xs text-muted-foreground">{role.description}</span>}
+              </div>
+              <Button
+                size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive shrink-0"
+                onClick={() => deleteMutation.mutate(role.id)}
+                disabled={deleteMutation.isPending}
+              >
+                <Trash2 size={13} />
+              </Button>
             </div>
-            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-              <span className="text-sm font-mono font-medium">{role.name}</span>
-              {role.description && <span className="text-xs text-muted-foreground">{role.description}</span>}
-            </div>
-            <Button
-              size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive shrink-0"
-              onClick={() => deleteMutation.mutate(role.id)}
-              disabled={deleteMutation.isPending}
-            >
-              <Trash2 size={13} />
-            </Button>
           </div>
         ))}
         {roles.length === 0 && (
-          <p className="text-sm text-muted-foreground italic px-4 py-6 text-center">No roles yet. Create one to assign permissions.</p>
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border/40 flex items-center justify-center">
+              <ShieldCheck size={20} className="text-muted-foreground/40" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">No roles yet</p>
+              <p className="text-xs text-muted-foreground/60 mt-0.5">Create one to assign permissions</p>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -358,26 +378,33 @@ function RolesTab({ initialRoles }: { initialRoles: Role[] }) {
 /* ── Root ── */
 export function TeamsClient({ initialUsers, initialRoles }: { initialUsers: TeamUser[]; initialRoles: Role[] }) {
   const [tab, setTab] = useState<'users' | 'roles'>('users');
+  const { data: users = initialUsers } = useQuery<TeamUser[]>({
+    queryKey: ['teams', 'users'],
+    queryFn: () => fetch('/api/teams/users').then(r => r.json()),
+    initialData: initialUsers,
+  });
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-3xl mx-auto w-full">
-      <div className="flex items-center gap-3">
-        <Users size={20} />
-        <h1 className="text-xl font-semibold">Team</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+            <Users size={16} className="text-indigo-400" />
+          </div>
+          <div>
+            <h1 className="text-sm font-semibold tracking-tight">Team</h1>
+            <p className="text-[11px] text-muted-foreground">{users.length} member{users.length !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
       </div>
 
-      <div className="flex gap-1 border-b">
+      <div className="flex p-0.5 gap-0.5 bg-muted/50 rounded-lg border border-border/40 w-fit">
         {(['users', 'roles'] as const).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              'px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px',
-              tab === t ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
-            )}
-          >
-            {t === 'users' ? <span className="flex items-center gap-1.5"><Users size={14} /> Users</span>
-                           : <span className="flex items-center gap-1.5"><ShieldCheck size={14} /> Roles</span>}
+          <button key={t} onClick={() => setTab(t)}
+            className={`text-[11px] px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all ${
+              tab === t ? 'bg-background text-foreground shadow-sm border border-border/50 font-medium' : 'text-muted-foreground hover:text-foreground'
+            }`}>
+            {t === 'users' ? <><Users size={11} />Users</> : <><ShieldCheck size={11} />Roles</>}
           </button>
         ))}
       </div>

@@ -645,16 +645,30 @@ function CreatePipelineForm({ onSuccess, onCancel }: { onSuccess: () => void; on
 
   const busy = create.isPending || generate.isPending || importMutation.isPending;
 
+  const fieldCls = "flex flex-col gap-1.5";
+  const labelCls = "text-[11px] font-medium text-muted-foreground uppercase tracking-wider";
+  const inputCls = "h-8 text-xs bg-muted/20 border-border/60 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500/60";
+  const textareaCls = "w-full rounded-md border border-border/60 bg-muted/20 p-2.5 text-xs resize-y focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-colors";
+
   return (
-    <div className="flex flex-col gap-3 p-4 border rounded-lg bg-muted/10">
-      <div className="flex items-center gap-2">
-        <p className="text-xs font-semibold flex-1">New Pipeline</p>
-        <div className="flex gap-1">
+    <div className="flex flex-col gap-4 p-4 rounded-xl border border-border/50 bg-card shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+            <Plus size={10} className="text-indigo-400" />
+          </div>
+          <p className="text-xs font-semibold tracking-tight">New Pipeline</p>
+        </div>
+        <div className="flex p-0.5 gap-0.5 bg-muted/50 rounded-lg border border-border/40">
           {(['manual', 'generate', 'import'] as const).map(m => (
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={`text-[11px] px-2 py-0.5 rounded border ${mode === m ? 'bg-primary text-primary-foreground border-primary' : 'border-muted-foreground/30 text-muted-foreground hover:text-foreground'}`}
+              className={`text-[11px] px-2.5 py-1 rounded-md transition-all ${
+                mode === m
+                  ? 'bg-background text-foreground shadow-sm border border-border/50 font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
               {m === 'manual' ? 'Manual' : m === 'generate' ? <span className="flex items-center gap-1"><Sparkles size={10} />AI</span> : 'Import'}
             </button>
@@ -664,63 +678,63 @@ function CreatePipelineForm({ onSuccess, onCancel }: { onSuccess: () => void; on
 
       {mode === 'manual' && (
         <>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium">Name <span className="text-destructive">*</span></label>
-            <Input autoFocus value={name} onChange={e => setName(e.target.value)} className="h-8 text-xs font-mono" placeholder="my-pipeline" onKeyDown={e => e.key === 'Enter' && handleCreate()} />
+          <div className={fieldCls}>
+            <label className={labelCls}>Name <span className="text-destructive normal-case tracking-normal">*</span></label>
+            <Input autoFocus value={name} onChange={e => setName(e.target.value)} className={`${inputCls} font-mono`} placeholder="my-pipeline" onKeyDown={e => e.key === 'Enter' && handleCreate()} />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium">Description</label>
-            <Input value={description} onChange={e => setDescription(e.target.value)} className="h-8 text-xs" placeholder="What does this pipeline do?" />
+          <div className={fieldCls}>
+            <label className={labelCls}>Description</label>
+            <Input value={description} onChange={e => setDescription(e.target.value)} className={inputCls} placeholder="What does this pipeline do?" />
           </div>
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleCreate} disabled={busy || !name.trim()}>
-              {create.isPending ? 'Creating...' : 'Create'}
+          <div className="flex gap-2 pt-1">
+            <Button size="sm" className="h-8 text-xs bg-indigo-600 hover:bg-indigo-500 text-white" onClick={handleCreate} disabled={busy || !name.trim()}>
+              {create.isPending ? <><RefreshCw size={11} className="animate-spin mr-1.5" />Creating…</> : 'Create Pipeline'}
             </Button>
-            <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
+            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={onCancel}>Cancel</Button>
           </div>
         </>
       )}
 
       {mode === 'generate' && (
         <>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium">Name <span className="text-destructive">*</span></label>
-            <Input autoFocus value={name} onChange={e => setName(e.target.value)} className="h-8 text-xs font-mono" placeholder="ci-pipeline" />
+          <div className={fieldCls}>
+            <label className={labelCls}>Name <span className="text-destructive normal-case tracking-normal">*</span></label>
+            <Input autoFocus value={name} onChange={e => setName(e.target.value)} className={`${inputCls} font-mono`} placeholder="ci-pipeline" />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium">Describe the pipeline <span className="text-destructive">*</span></label>
+          <div className={fieldCls}>
+            <label className={labelCls}>Describe the pipeline <span className="text-destructive normal-case tracking-normal">*</span></label>
             <textarea
               value={genDesc}
               onChange={e => setGenDesc(e.target.value)}
               placeholder="Run tests, if they pass build docker image, push to registry, notify team"
-              className="min-h-[72px] w-full rounded-md border bg-muted/20 p-2 text-xs resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+              className={`min-h-[80px] ${textareaCls}`}
             />
           </div>
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleGenerate} disabled={busy || !name.trim() || !genDesc.trim()}>
-              {generate.isPending ? <><RefreshCw size={11} className="animate-spin mr-1" />Generating...</> : <><Sparkles size={11} className="mr-1" />Generate</>}
+          <div className="flex gap-2 pt-1">
+            <Button size="sm" className="h-8 text-xs bg-indigo-600 hover:bg-indigo-500 text-white" onClick={handleGenerate} disabled={busy || !name.trim() || !genDesc.trim()}>
+              {generate.isPending ? <><RefreshCw size={11} className="animate-spin mr-1.5" />Generating…</> : <><Sparkles size={11} className="mr-1.5" />Generate</>}
             </Button>
-            <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
+            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={onCancel}>Cancel</Button>
           </div>
         </>
       )}
 
       {mode === 'import' && (
         <>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium">Paste YAML <span className="text-destructive">*</span></label>
+          <div className={fieldCls}>
+            <label className={labelCls}>Paste YAML <span className="text-destructive normal-case tracking-normal">*</span></label>
             <textarea
               value={yamlText}
               onChange={e => setYamlText(e.target.value)}
               placeholder="name: my-pipeline&#10;nodes: ..."
-              className="min-h-[120px] w-full rounded-md border bg-muted/20 p-2 text-xs font-mono resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+              className={`min-h-[120px] font-mono ${textareaCls}`}
             />
           </div>
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleImport} disabled={busy || !yamlText.trim()}>
-              {importMutation.isPending ? 'Importing...' : 'Import'}
+          <div className="flex gap-2 pt-1">
+            <Button size="sm" className="h-8 text-xs bg-indigo-600 hover:bg-indigo-500 text-white" onClick={handleImport} disabled={busy || !yamlText.trim()}>
+              {importMutation.isPending ? <><RefreshCw size={11} className="animate-spin mr-1.5" />Importing…</> : <><Upload size={11} className="mr-1.5" />Import</>}
             </Button>
-            <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
+            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={onCancel}>Cancel</Button>
           </div>
         </>
       )}
@@ -818,78 +832,109 @@ export function PipelineDetail({
 
   const nodes = localNodes;
 
+  const togglePanel = (panel: 'run' | 'logs' | 'visualize' | 'schedule') => {
+    setShowRun(panel === 'run' ? v => !v : false);
+    setShowLogs(panel === 'logs' ? v => !v : false);
+    setShowVisualize(panel === 'visualize' ? v => !v : false);
+    setShowSchedule(panel === 'schedule' ? v => !v : false);
+  };
+
+  const tbBtn = (active: boolean) =>
+    `h-7 text-xs gap-1.5 transition-colors ${active ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/15' : ''}`;
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b">
-        <button onClick={onBack ?? (() => router.push('/studio/pipelines'))} className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted">
-          <ArrowLeft size={14} />
+      <div className="flex items-center gap-2 px-3 py-1.5 border-b bg-card/50 backdrop-blur-sm">
+        <button
+          onClick={onBack ?? (() => router.push('/studio/pipelines'))}
+          className="text-muted-foreground hover:text-foreground p-1.5 rounded-md hover:bg-muted transition-colors"
+        >
+          <ArrowLeft size={13} />
         </button>
-        <span className="font-semibold text-sm font-mono">{item.name}</span>
-        {item.description && <span className="text-xs text-muted-foreground truncate">— {item.description}</span>}
-        <Badge variant="secondary" className="font-mono text-[10px]">v{pipeline?.version ?? '2'}</Badge>
-        <Badge variant="outline" className="text-[10px]">{nodes.length} nodes</Badge>
+        <div className="w-px h-4 bg-border/60 shrink-0" />
+        <span className="font-semibold text-sm tracking-tight">{item.name}</span>
+        {item.description && <span className="text-[11px] text-muted-foreground truncate max-w-48">— {item.description}</span>}
+        <Badge variant="secondary" className="font-mono text-[10px] h-5 px-1.5">v{pipeline?.version ?? '2'}</Badge>
+        <span className="text-[10px] text-muted-foreground/60">{nodes.length} nodes</span>
 
-        <div className="ml-auto flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => {
-              const aiTool = tools.find(t => t.nodeType === 'ai' || t.category === 'ai') ?? {
-                name: 'ai_agent',
-                category: 'ai',
-                nodeType: 'ai' as const,
-                description: 'AI agent node',
-                inputs: [],
-                outputType: 'any',
-                requiresLLM: true,
-                capabilities: [],
-              };
-              handleAddNode(aiTool);
-            }}
-          >
-            <Plus size={11} className="mr-1" /> AI Node
-          </Button>
-          {dirty && (
-            <Button size="sm" className="h-7 text-xs" onClick={handleSave} disabled={saving}>
-              {saving ? <RefreshCw size={11} className="animate-spin mr-1" /> : <Save size={11} className="mr-1" />}
-              Save
+        <div className="ml-auto flex items-center gap-0">
+          {/* Group 1: edit actions */}
+          <div className="flex items-center gap-1 pr-2 mr-1 border-r border-border/50">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              onClick={() => {
+                const aiTool = tools.find(t => t.nodeType === 'ai' || t.category === 'ai') ?? {
+                  name: 'ai_agent', category: 'ai', nodeType: 'ai' as const,
+                  description: 'AI agent node', inputs: [], outputType: 'any',
+                  requiresLLM: true, capabilities: [],
+                };
+                handleAddNode(aiTool);
+              }}
+            >
+              <Plus size={11} strokeWidth={2.5} /> AI Node
             </Button>
-          )}
-          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleValidate} disabled={validateMutation.isPending}>
-            <CheckCircle size={11} className="mr-1" /> Validate
-          </Button>
-          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { setShowVisualize(v => !v); setShowLogs(false); setShowSchedule(false); setShowRun(false); }}>
-            <GitBranch size={11} className="mr-1" /> Diagram
-          </Button>
-          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { setShowLogs(v => !v); setShowVisualize(false); setShowSchedule(false); setShowRun(false); }}>
-            <ScrollText size={11} className="mr-1" /> Logs
-          </Button>
-          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { setShowSchedule(v => !v); setShowLogs(false); setShowVisualize(false); setShowRun(false); }}>
-            <Calendar size={11} className="mr-1" /> Schedule
-          </Button>
-          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleExport} disabled={exportMutation.isPending}>
-            <Download size={11} className="mr-1" /> Export
-          </Button>
-          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { setShowRun(v => !v); setShowLogs(false); setShowVisualize(false); setShowSchedule(false); }}>
-            <Play size={11} className="mr-1" /> Run
-          </Button>
-          <Button
-            variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive"
-            onClick={() => deleteMutation.mutate(item.name)}
-            disabled={deleteMutation.isPending}
-          >
-            <Trash2 size={11} className="mr-1" /> Delete
-          </Button>
+            {dirty ? (
+              <Button size="sm" className="h-7 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white" onClick={handleSave} disabled={saving}>
+                {saving ? <RefreshCw size={11} className="animate-spin" /> : <Save size={11} />}
+                Save
+              </Button>
+            ) : null}
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={handleValidate} disabled={validateMutation.isPending}>
+              <CheckCircle size={11} /> Validate
+            </Button>
+          </div>
+
+          {/* Group 2: view toggles */}
+          <div className="flex items-center gap-0.5 pr-2 mr-1 border-r border-border/50">
+            <Button variant="outline" size="sm" className={tbBtn(showVisualize)} onClick={() => togglePanel('visualize')}>
+              <GitBranch size={11} /> Diagram
+            </Button>
+            <Button variant="outline" size="sm" className={tbBtn(showLogs)} onClick={() => togglePanel('logs')}>
+              <ScrollText size={11} /> Logs
+            </Button>
+            <Button variant="outline" size="sm" className={tbBtn(showSchedule)} onClick={() => togglePanel('schedule')}>
+              <Calendar size={11} /> Schedule
+            </Button>
+          </div>
+
+          {/* Group 3: run + export + delete */}
+          <div className="flex items-center gap-1 pl-0">
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={handleExport} disabled={exportMutation.isPending}>
+              <Download size={11} /> Export
+            </Button>
+            <Button
+              size="sm"
+              className={`h-7 text-xs gap-1.5 transition-colors ${showRun ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-600/90 hover:bg-emerald-500 text-white'}`}
+              onClick={() => togglePanel('run')}
+            >
+              <Play size={11} strokeWidth={2.5} /> Run
+            </Button>
+            <Button
+              variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-destructive hover:bg-destructive/8"
+              onClick={() => deleteMutation.mutate(item.name)}
+              disabled={deleteMutation.isPending}
+            >
+              <Trash2 size={11} />
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Validation */}
+      {/* Validation banner */}
       {validation && (
-        <div className={`flex items-start gap-2 px-3 py-2 text-xs border-b ${validation.valid ? 'bg-green-50 text-green-700' : 'bg-destructive/10 text-destructive'}`}>
-          {validation.valid ? <CheckCircle size={12} className="shrink-0 mt-0.5" /> : <XCircle size={12} className="shrink-0 mt-0.5" />}
-          <span className="font-mono whitespace-pre-wrap">{validation.output}</span>
+        <div className={`flex items-start gap-2.5 px-3 py-2 text-xs border-b ${
+          validation.valid
+            ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+            : 'bg-destructive/5 border-destructive/20 text-destructive'
+        }`}>
+          {validation.valid
+            ? <CheckCircle size={12} className="shrink-0 mt-0.5" />
+            : <XCircle size={12} className="shrink-0 mt-0.5" />
+          }
+          <span className="font-mono whitespace-pre-wrap text-[11px]">{validation.output}</span>
         </div>
       )}
 
@@ -947,15 +992,25 @@ export function PipelinesClient({
   const [runningPipeline, setRunningPipeline] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-col h-full min-h-0 p-6 gap-4 max-w-2xl mx-auto w-full">
+    <div className="flex flex-col h-full min-h-0 p-6 gap-5 max-w-2xl mx-auto w-full">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Workflow size={18} />
-          <h1 className="text-lg font-semibold">Pipelines</h1>
-          <Badge variant="secondary">{pipelines.length}</Badge>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+            <Workflow size={16} className="text-indigo-400" />
+          </div>
+          <div>
+            <h1 className="text-sm font-semibold tracking-tight">Pipelines</h1>
+            <p className="text-[11px] text-muted-foreground">
+              {pipelines.length} workflow{pipelines.length !== 1 ? 's' : ''}
+            </p>
+          </div>
         </div>
-        <Button size="sm" onClick={() => setShowCreate(v => !v)}>
-          <Plus size={13} className="mr-1" /> New Pipeline
+        <Button
+          size="sm"
+          className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm"
+          onClick={() => setShowCreate(v => !v)}
+        >
+          <Plus size={12} strokeWidth={2.5} /> New Pipeline
         </Button>
       </div>
 
@@ -966,27 +1021,42 @@ export function PipelinesClient({
         />
       )}
 
-      {isLoading && <p className="text-sm text-muted-foreground">Loading...</p>}
+      {isLoading && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <RefreshCw size={13} className="animate-spin" /> Loading…
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         {pipelines.map(p => (
-          <div key={p.name} className="flex flex-col rounded-lg border overflow-hidden">
-            <div className="flex items-center gap-3 px-4 py-3">
-              <Workflow size={16} className="text-muted-foreground shrink-0" />
-              <Link href={`/studio/pipelines/${p.name}`} className="flex flex-col gap-0.5 flex-1 min-w-0 hover:underline">
-                <span className="font-medium text-sm font-mono">{p.name}</span>
-                {p.description && <span className="text-xs text-muted-foreground truncate">{p.description}</span>}
-              </Link>
-              <Badge variant="outline" className="text-[10px] shrink-0">v{p.version}</Badge>
-              <Button
-                size="sm"
-                variant={runningPipeline === p.name ? 'secondary' : 'outline'}
-                className="h-7 text-xs shrink-0"
-                onClick={() => setRunningPipeline(r => r === p.name ? null : p.name)}
-              >
-                <Play size={11} className="mr-1" />
-                Run
-              </Button>
+          <div key={p.name} className="group flex flex-col rounded-xl border border-border/40 overflow-hidden bg-card hover:border-border/70 hover:shadow-sm transition-all duration-150">
+            <div className="flex items-stretch">
+              <div className="w-[3px] shrink-0 bg-gradient-to-b from-indigo-500/60 to-indigo-600/30 group-hover:from-indigo-400/80 group-hover:to-indigo-500/50 transition-all" />
+              <div className="flex-1 flex items-center gap-3 px-4 py-3.5">
+                <Link href={`/studio/pipelines/${p.name}`} className="flex flex-col gap-0.5 flex-1 min-w-0">
+                  <span className="font-semibold text-sm tracking-tight group-hover:text-indigo-400 transition-colors">{p.name}</span>
+                  {p.description
+                    ? <span className="text-[11px] text-muted-foreground truncate">{p.description}</span>
+                    : <span className="text-[11px] text-muted-foreground/40 italic">No description</span>
+                  }
+                </Link>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[10px] text-muted-foreground/50 font-mono">v{p.version}</span>
+                  <Button
+                    size="sm"
+                    variant={runningPipeline === p.name ? 'default' : 'ghost'}
+                    className={`h-7 text-xs gap-1.5 shrink-0 transition-colors ${
+                      runningPipeline === p.name
+                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                        : 'text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/8'
+                    }`}
+                    onClick={() => setRunningPipeline(r => r === p.name ? null : p.name)}
+                  >
+                    <Play size={10} strokeWidth={2.5} />
+                    {runningPipeline === p.name ? 'Running' : 'Run'}
+                  </Button>
+                </div>
+              </div>
             </div>
             {runningPipeline === p.name && (
               <RunPanel name={p.name} onClose={() => setRunningPipeline(null)} />
@@ -994,7 +1064,15 @@ export function PipelinesClient({
           </div>
         ))}
         {pipelines.length === 0 && !isLoading && (
-          <p className="text-sm text-muted-foreground italic">No pipelines. Create one to get started.</p>
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border/40 flex items-center justify-center">
+              <Workflow size={20} className="text-muted-foreground/40" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">No pipelines yet</p>
+              <p className="text-xs text-muted-foreground/60 mt-0.5">Create a workflow to get started</p>
+            </div>
+          </div>
         )}
       </div>
     </div>

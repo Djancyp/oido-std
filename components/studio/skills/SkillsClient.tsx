@@ -38,10 +38,10 @@ const EMPTY_FORM: SkillForm = {
 };
 
 const LEVEL_COLORS: Record<string, string> = {
-  user: 'bg-blue-100 text-blue-700',
-  project: 'bg-amber-100 text-amber-700',
-  bundled: 'bg-zinc-100 text-zinc-600',
-  extension: 'bg-purple-100 text-purple-700',
+  user: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+  project: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+  bundled: 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20',
+  extension: 'bg-violet-500/10 text-violet-400 border border-violet-500/20',
 };
 
 /* ── Main component ── */
@@ -124,20 +124,20 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
   return (
     <div className="flex flex-col h-dvh bg-background text-foreground">
       {/* Header */}
-      <header className="flex items-center justify-between gap-3 flex-wrap px-4 md:px-6 py-4 border-b bg-muted/10 shrink-0">
+      <header className="flex items-center justify-between gap-3 flex-wrap px-4 md:px-6 py-3 border-b bg-muted/10 shrink-0">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/studio')}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => router.push('/studio')}>
             <ChevronLeft size={20} />
           </Button>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">Skills</h1>
+            <h1 className="text-base font-semibold tracking-tight">Skills</h1>
             <p className="text-xs text-muted-foreground">
               Domain knowledge packages for oido
             </p>
           </div>
         </div>
-        <Button onClick={openNew} className="gap-2 active:scale-95 transition-transform">
-          <Plus size={16} /> New Skill
+        <Button onClick={openNew} className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm active:scale-95 transition-transform">
+          <Plus size={14} /> New Skill
         </Button>
       </header>
 
@@ -149,7 +149,7 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
               <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search skills..."
-                className="pl-8 h-8 text-xs bg-muted/30"
+                className="pl-8 h-8 text-xs bg-muted/30 border-border/40 focus-visible:ring-indigo-500/30"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
@@ -169,13 +169,13 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
                     key={skill.name}
                     onClick={() => openView(skill)}
                     className={cn(
-                      'group w-full text-left rounded-md px-3 py-2.5 hover:bg-muted/60 transition-colors',
-                      selected?.name === skill.name && mode !== 'new' && 'bg-muted/80'
+                      'group w-full text-left rounded-md px-3 py-2.5 hover:bg-muted/50 transition-colors',
+                      selected?.name === skill.name && mode !== 'new' && 'bg-indigo-500/8 border-l-2 border-indigo-500/40'
                     )}
                   >
                     <div className="flex items-center justify-between gap-1">
                       <span className="text-sm font-medium truncate">{skill.name}</span>
-                      <span className={cn('text-[9px] font-bold uppercase px-1.5 py-0.5 rounded', LEVEL_COLORS[skill.level] ?? LEVEL_COLORS.bundled)}>
+                      <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-md', LEVEL_COLORS[skill.level] ?? LEVEL_COLORS.bundled)}>
                         {skill.level}
                       </span>
                     </div>
@@ -188,7 +188,7 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
             )}
           </ScrollArea>
 
-          <div className="p-3 border-t text-[10px] text-muted-foreground">
+          <div className="p-3 border-t text-[10px] text-muted-foreground/50">
             {skills.length} skill{skills.length !== 1 ? 's' : ''} installed
           </div>
         </div>
@@ -215,21 +215,21 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
                 {/* Toolbar */}
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
-                    <h2 className="text-lg font-bold">{selected.name}</h2>
-                    <span className={cn('text-[10px] font-bold uppercase px-2 py-0.5 rounded', LEVEL_COLORS[selected.level] ?? LEVEL_COLORS.bundled)}>
+                    <h2 className="text-base font-semibold tracking-tight">{selected.name}</h2>
+                    <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-md', LEVEL_COLORS[selected.level] ?? LEVEL_COLORS.bundled)}>
                       {selected.level}
                     </span>
                   </div>
                   <div className="flex gap-2">
                     {(selected.level === 'user' || selected.level === 'project') && (
                       <>
-                        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => openEdit(selected)}>
+                        <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => openEdit(selected)}>
                           <Pencil size={12} /> Edit
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-8 text-destructive hover:bg-destructive/10 border-destructive/30"
+                          className="h-7 text-destructive hover:bg-destructive/10 border-destructive/30"
                           onClick={() => handleDelete(selected.name)}
                           disabled={del.isPending}
                         >
@@ -245,9 +245,9 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
                 {selected.tools && selected.tools.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-4">
                     {selected.tools.map(t => (
-                      <Badge key={t} variant="secondary" className="text-[11px] gap-1">
+                      <span key={t} className="text-[11px] bg-indigo-500/8 text-indigo-400 border border-indigo-500/15 px-2 py-0.5 rounded-md flex items-center gap-1">
                         <Wrench size={10} /> {t}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 )}
@@ -257,11 +257,11 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
                 )}
 
                 {selected.body && (
-                  <Card className="p-4">
+                  <div className="rounded-xl border border-border/40 bg-muted/20 p-4">
                     <pre className="text-xs text-foreground/80 whitespace-pre-wrap font-mono leading-relaxed">
                       {selected.body}
                     </pre>
-                  </Card>
+                  </div>
                 )}
               </div>
             </ScrollArea>
@@ -280,7 +280,7 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
                   </Button>
                   <Button
                     size="sm"
-                    className="h-8 gap-1.5 text-xs"
+                    className="h-8 gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm"
                     onClick={handleSave}
                     disabled={isSaving || !form.name.trim() || !form.description.trim()}
                   >
@@ -295,28 +295,30 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
                   {/* Name + Scope */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold">Name</label>
+                      <label className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">Name</label>
                       <Input
                         value={form.name}
                         onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                         placeholder="my-skill"
                         disabled={mode === 'edit'}
-                        className="h-9 text-sm font-mono"
+                        className="h-9 text-sm font-mono border-border/50 bg-muted/20 focus-visible:ring-indigo-500/30 focus-visible:border-indigo-500/50"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold">Scope</label>
-                      <div className="flex gap-2">
+                      <label className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">Scope</label>
+                      <div className="flex p-0.5 gap-0.5 bg-muted/50 rounded-lg border border-border/40">
                         {(['user', 'project'] as const).map(s => (
-                          <Button
+                          <button
                             key={s}
-                            variant={form.scope === s ? 'default' : 'outline'}
-                            size="sm"
-                            className="flex-1 h-9 text-xs capitalize"
                             onClick={() => setForm(f => ({ ...f, scope: s }))}
+                            className={`flex-1 text-[11px] px-2.5 py-1 rounded-md capitalize transition-all ${
+                              form.scope === s
+                                ? 'bg-background text-foreground shadow-sm border border-border/50 font-medium'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
                           >
                             {s}
-                          </Button>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -324,18 +326,18 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
 
                   {/* Description */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold">Description</label>
+                    <label className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">Description</label>
                     <Input
                       value={form.description}
                       onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                       placeholder="What does this skill do?"
-                      className="h-9 text-sm"
+                      className="h-9 text-sm border-border/50 bg-muted/20 focus-visible:ring-indigo-500/30 focus-visible:border-indigo-500/50"
                     />
                   </div>
 
                   {/* Tools */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold flex items-center gap-1.5">
+                    <label className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest flex items-center gap-1.5">
                       <Wrench size={12} /> Allowed Tools
                     </label>
                     <div className="flex gap-2">
@@ -344,7 +346,7 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
                         onChange={e => setToolInput(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTool())}
                         placeholder="tool_name (press Enter)"
-                        className="h-8 text-xs font-mono"
+                        className="h-8 text-xs font-mono border-border/50 bg-muted/20 focus-visible:ring-indigo-500/30 focus-visible:border-indigo-500/50"
                       />
                       <Button variant="outline" size="sm" className="h-8 text-xs" onClick={addTool}>
                         <Tag size={12} />
@@ -353,12 +355,12 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
                     {form.tools.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-1">
                         {form.tools.map(t => (
-                          <Badge key={t} variant="secondary" className="text-[11px] gap-1 pr-1">
+                          <span key={t} className="text-[11px] bg-indigo-500/8 text-indigo-400 border border-indigo-500/15 px-2 py-0.5 rounded-md flex items-center gap-1 pr-1">
                             {t}
                             <button onClick={() => removeTool(t)} className="hover:text-destructive ml-0.5">
                               <X size={10} />
                             </button>
-                          </Badge>
+                          </span>
                         ))}
                       </div>
                     )}
@@ -366,12 +368,12 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
 
                   {/* Body */}
                   <div className="flex flex-col gap-1.5 flex-1">
-                    <label className="text-xs font-semibold">Body (Markdown)</label>
+                    <label className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">Body (Markdown)</label>
                     <textarea
                       value={form.body}
                       onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
                       placeholder="Write the skill instructions in markdown..."
-                      className="min-h-[320px] w-full rounded-md border bg-muted/20 p-3 text-xs font-mono leading-relaxed resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="min-h-[320px] w-full rounded-md border border-border/50 bg-muted/20 p-3 text-xs font-mono leading-relaxed resize-y focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50"
                     />
                   </div>
                 </div>

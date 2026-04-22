@@ -94,17 +94,17 @@ export function ExtensionsClient({ initialExtensions }: Props) {
       {/* Header */}
       <header className="flex items-center justify-between gap-3 flex-wrap px-4 md:px-6 py-4 border-b bg-muted/10">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/studio')}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => router.push('/studio')}>
             <ChevronLeft size={20} />
           </Button>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">Extensions</h1>
+            <h1 className="text-base font-semibold tracking-tight">Extensions</h1>
             <p className="text-xs text-muted-foreground">Manage your MCP servers and tools</p>
           </div>
         </div>
         <Button
           onClick={() => setShowInstall(v => !v)}
-          className="gap-2 shadow-lg transition-all active:scale-95"
+          className="gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition-all active:scale-95"
         >
           <Plus size={16} />
           Install Extension
@@ -120,14 +120,14 @@ export function ExtensionsClient({ initialExtensions }: Props) {
           />
           <Input
             placeholder="Search extensions..."
-            className="pl-10 h-10 bg-muted/30"
+            className="pl-10 h-10 bg-muted/30 focus-visible:ring-indigo-500/30"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
         </div>
 
         {showInstall && (
-          <Card className="p-4 border-primary/20 bg-primary/5 animate-in slide-in-from-top-2">
+          <Card className="p-4 border-indigo-500/20 bg-indigo-500/5 animate-in slide-in-from-top-2">
             <div className="flex gap-2">
               <Input
                 autoFocus
@@ -135,10 +135,10 @@ export function ExtensionsClient({ initialExtensions }: Props) {
                 value={installSource}
                 onChange={e => setInstallSource(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleInstall()}
-                className="bg-background"
+                className="bg-background border-border/50 focus-visible:ring-indigo-500/30"
                 disabled={install.isPending}
               />
-              <Button onClick={handleInstall} disabled={install.isPending || !installSource.trim()}>
+              <Button onClick={handleInstall} disabled={install.isPending || !installSource.trim()} className="bg-indigo-600 hover:bg-indigo-500 text-white">
                 {install.isPending ? <Loader2 size={14} className="animate-spin" /> : 'Install'}
               </Button>
               <Button variant="ghost" onClick={() => setShowInstall(false)}>
@@ -146,8 +146,8 @@ export function ExtensionsClient({ initialExtensions }: Props) {
               </Button>
             </div>
             <p className="text-[10px] text-muted-foreground mt-2 px-1">
-              Example: <code className="text-primary">/home/user/my-mcp-server</code> or{' '}
-              <code className="text-primary">https://github.com/user/repo</code>
+              Example: <code className="text-indigo-400">/home/user/my-mcp-server</code> or{' '}
+              <code className="text-indigo-400">https://github.com/user/repo</code>
             </p>
             {install.isError && (
               <p className="text-[11px] text-destructive mt-1 px-1">
@@ -161,11 +161,18 @@ export function ExtensionsClient({ initialExtensions }: Props) {
       {/* Grid */}
       <main className="flex-1 overflow-y-auto p-6 bg-muted/5">
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center gap-3 text-muted-foreground">
-            <Package size={40} className="opacity-20" />
-            <p className="text-sm">
-              {search ? 'No extensions match your search.' : 'No extensions installed.'}
-            </p>
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border/40 flex items-center justify-center">
+              <Package size={20} className="text-muted-foreground/40" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                {search ? 'No extensions match your search.' : 'No extensions installed.'}
+              </p>
+              <p className="text-xs text-muted-foreground/60 mt-0.5">
+                {search ? 'Try a different search term.' : 'Install an extension to get started.'}
+              </p>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-7xl mx-auto">
@@ -173,12 +180,12 @@ export function ExtensionsClient({ initialExtensions }: Props) {
               <Card
                 key={ext.name}
                 className={cn(
-                  'group relative flex flex-col p-5 transition-all hover:shadow-md hover:border-primary/50',
+                  'group relative flex flex-col p-5 transition-all hover:shadow-md hover:border-indigo-500/30',
                   ext.status === 'disabled' && 'opacity-70 grayscale-[0.4]'
                 )}
               >
                 <div className="flex justify-between items-start mb-3">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                  <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
                     <Package size={20} />
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -198,7 +205,7 @@ export function ExtensionsClient({ initialExtensions }: Props) {
 
                 <div className="space-y-1 mb-4">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-bold text-sm truncate">{ext.name}</h3>
+                    <h3 className="text-sm font-semibold tracking-tight truncate">{ext.name}</h3>
                     <Badge variant="secondary" className="text-[10px] py-0 h-4">
                       v{ext.version}
                     </Badge>
@@ -232,7 +239,7 @@ export function ExtensionsClient({ initialExtensions }: Props) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 text-xs gap-1"
+                      className="h-7 text-[11px] gap-1"
                       disabled={!ext.has_configuration}
                       onClick={() => handleOpenSettings(ext.name)}
                     >
@@ -242,7 +249,7 @@ export function ExtensionsClient({ initialExtensions }: Props) {
                     <Button
                       variant={ext.status === 'enabled' ? 'secondary' : 'default'}
                       size="sm"
-                      className="h-8 w-8 p-0"
+                      className="h-7 w-7 p-0"
                       onClick={() => handleToggle(ext)}
                       disabled={isPending(ext.name)}
                     >

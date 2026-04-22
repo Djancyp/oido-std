@@ -17,8 +17,8 @@ type Props = {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</label>
+    <div className="flex flex-col gap-1.5">
+      <label className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">{label}</label>
       {children}
     </div>
   );
@@ -30,7 +30,7 @@ function Textarea({ value, onChange, placeholder }: { value: string; onChange: (
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className="min-h-[80px] w-full rounded-md border bg-muted/20 p-2 text-xs resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+      className="min-h-[80px] w-full rounded-lg border border-border/50 bg-muted/20 p-2.5 text-xs resize-y focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-colors placeholder:text-muted-foreground/40"
     />
   );
 }
@@ -251,38 +251,55 @@ function TransformConfig({ config, onChange }: { config: any; onChange: (c: any)
   );
 }
 
+const NODE_TYPE_COLORS: Record<string, string> = {
+  trigger: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+  ai: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
+  builtin_tool: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+  mcp_tool: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+  condition: 'text-red-400 bg-red-500/10 border-red-500/20',
+  flow: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
+  transform: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
+};
+
 /* ── Main panel ── */
 export function NodeConfigPanel({ node, onChange, onClose }: Props) {
   const updateConfig = (newConfig: any) => onChange({ ...node, config: newConfig });
+  const typeCls = NODE_TYPE_COLORS[node.type] ?? 'text-muted-foreground bg-muted border-border';
 
   const renderConfig = () => {
     switch (node.type) {
-      case 'ai':          return <AIConfig config={node.config} onChange={updateConfig} />;
-      case 'trigger':     return <TriggerConfig config={node.config} onChange={updateConfig} />;
+      case 'ai':           return <AIConfig config={node.config} onChange={updateConfig} />;
+      case 'trigger':      return <TriggerConfig config={node.config} onChange={updateConfig} />;
       case 'builtin_tool': return <BuiltinToolConfig config={node.config} onChange={updateConfig} />;
-      case 'mcp_tool':    return <McpToolConfig config={node.config} onChange={updateConfig} />;
-      case 'condition':   return <ConditionConfig config={node.config} onChange={updateConfig} />;
-      case 'flow':        return <FlowConfig config={node.config} onChange={updateConfig} nodeLabel={node.label} />;
-      case 'transform':   return <TransformConfig config={node.config} onChange={updateConfig} />;
-      default:            return <p className="text-xs text-muted-foreground">No config for type: {node.type}</p>;
+      case 'mcp_tool':     return <McpToolConfig config={node.config} onChange={updateConfig} />;
+      case 'condition':    return <ConditionConfig config={node.config} onChange={updateConfig} />;
+      case 'flow':         return <FlowConfig config={node.config} onChange={updateConfig} nodeLabel={node.label} />;
+      case 'transform':    return <TransformConfig config={node.config} onChange={updateConfig} />;
+      default:             return <p className="text-xs text-muted-foreground">No config for type: {node.type}</p>;
     }
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-3 py-2.5 border-b">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-xs font-semibold">{node.label}</span>
-          <span className="text-[10px] text-muted-foreground font-mono">{node.type}</span>
+    <div className="flex flex-col h-full bg-card/50">
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/50 bg-card/80">
+        <div className="flex items-center gap-2">
+          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${typeCls}`}>
+            {node.type}
+          </span>
+          <span className="text-xs font-semibold tracking-tight">{node.label}</span>
         </div>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-          <X size={14} />
+        <button onClick={onClose} className="text-muted-foreground/60 hover:text-foreground p-1 rounded hover:bg-muted transition-colors">
+          <X size={13} />
         </button>
       </div>
 
-      <div className="flex flex-col gap-3 p-3 overflow-y-auto flex-1">
+      <div className="flex flex-col gap-3.5 p-3 overflow-y-auto flex-1">
         <Field label="Label">
-          <Input value={node.label} onChange={e => onChange({ ...node, label: e.target.value })} className="h-8 text-xs" />
+          <Input
+            value={node.label}
+            onChange={e => onChange({ ...node, label: e.target.value })}
+            className="h-8 text-xs border-border/50 bg-muted/20 focus-visible:ring-indigo-500/30 focus-visible:border-indigo-500/50"
+          />
         </Field>
         {renderConfig()}
       </div>
