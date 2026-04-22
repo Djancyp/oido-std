@@ -37,7 +37,7 @@ export default async function StudioLayout({ children }: { children: React.React
             initialSessions={sessions}
             initialConversation={initialConversation}
           >
-            <SidebarProvider>
+            <SidebarProvider defaultOpen={false}>
               <AppSidebar />
               <SidebarInset>
                 <div className="md:hidden flex items-center px-3 py-2 border-b">

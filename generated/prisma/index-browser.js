@@ -139,6 +139,41 @@ exports.Prisma.UserRoleScalarFieldEnum = {
   assignedAt: 'assignedAt'
 };
 
+exports.Prisma.ProjectScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ColumnScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  name: 'name',
+  order: 'order',
+  color: 'color',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.TaskScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  columnId: 'columnId',
+  title: 'title',
+  description: 'description',
+  priority: 'priority',
+  order: 'order',
+  assignedAgentId: 'assignedAgentId',
+  assignedAgentName: 'assignedAgentName',
+  dueDate: 'dueDate',
+  labels: 'labels',
+  runAuto: 'runAuto',
+  dependsOn: 'dependsOn',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -153,7 +188,10 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.ModelName = {
   Role: 'Role',
   User: 'User',
-  UserRole: 'UserRole'
+  UserRole: 'UserRole',
+  Project: 'Project',
+  Column: 'Column',
+  Task: 'Task'
 };
 
 /**
