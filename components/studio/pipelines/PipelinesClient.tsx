@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Workflow, Play, Trash2, Plus, CheckCircle, XCircle, RefreshCw, Save, ArrowLeft, GitBranch, ScrollText, Download, Upload, Sparkles, Calendar, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -67,74 +68,350 @@ function defaultConfig(tool: PipelineTool): Record<string, any> {
   }
 }
 
+/* ── run/log types ── */
+type RunNodeResult = {
+  nodeId: string;
+  nodeType: string;
+  label: string;
+  output?: string;
+  error?: string;
+  durationMs: number; // nanoseconds (misnamed in CLI output)
+  startedAt: string;
+  endedAt: string;
+};
+
+type RunResult = {
+  pipeline: string;
+  success: boolean;
+  duration: string;
+  durationMs: number; // actual milliseconds (total run)
+  nodesRun: number;
+  nodesTotal: number;
+  nodeResults: RunNodeResult[];
+};
+
+type LogLine =
+  | { kind: 'executor'; time: string; msg: string }
+  | { kind: 'info'; msg: string }
+  | { kind: 'err'; msg: string };
+
+type RunSummary = { id: string; startedAt: string; state: string; duration: string };
+
+type RunDetailNode = { status: string; type: string; label: string; duration: string; output: string };
+
+type RunDetailData = {
+  pipeline: string; runId: string; state: string;
+  trigger: string; started: string; duration: string;
+  nodes: RunDetailNode[];
+};
+
+/* ── format helpers ── */
+function fmtMs(ms: number): string {
+  if (ms < 1) return '<1ms';
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
+  const m = Math.floor(ms / 60_000);
+  const s = Math.round((ms % 60_000) / 1000);
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
+}
+
+function fmtNs(ns: number): string {
+  if (ns < 1_000) return `${ns}ns`;
+  if (ns < 1_000_000) return `${(ns / 1000).toFixed(0)}µs`;
+  return fmtMs(ns / 1_000_000);
+}
+
+function fmtDurationStr(s: string): string {
+  const m = s.match(/^(\d+)ms$/);
+  return m ? fmtMs(parseInt(m[1])) : s;
+}
+
+function parseRunList(output: string): RunSummary[] {
+  return output.trim().split('\n').slice(1)
+    .map(line => {
+      const parts = line.trim().split(/\s{2,}/);
+      if (parts.length < 4) return null;
+      return { id: parts[0], startedAt: parts[1], state: parts[2], duration: parts[3] } as RunSummary;
+    })
+    .filter((x): x is RunSummary => x !== null && !!x.id);
+}
+
+function parseRunDetail(output: string): RunDetailData {
+  const lines = output.split('\n');
+  const meta: Record<string, string> = {};
+  const nodes: RunDetailNode[] = [];
+  let inNodes = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^-{4,}/.test(line)) { inNodes = true; continue; }
+    if (!inNodes) {
+      const m = line.match(/^([\w\s]+):\s+(.+)$/);
+      if (m) meta[m[1].trim()] = m[2].trim();
+    } else {
+      const nm = line.match(/^\s+([✓✗])\s+\[(\w+)\]\s+(.+?)\s+\((\d+ms)\)\s*$/);
+      if (nm) {
+        const [, status, type, label, dur] = nm;
+        let out = '';
+        if (lines[i + 1]?.match(/^\s+output:/)) {
+          out = lines[i + 1].replace(/^\s+output:\s*/, '').trim();
+          i++;
+        }
+        nodes.push({ status, type, label, duration: dur, output: out });
+      }
+    }
+  }
+  return {
+    pipeline: meta['Pipeline'] ?? '',
+    runId: meta['Run ID'] ?? '',
+    state: meta['State'] ?? '',
+    trigger: meta['Trigger'] ?? '',
+    started: meta['Started'] ?? '',
+    duration: meta['Duration'] ?? '',
+    nodes,
+  };
+}
+
 /* ── Run panel ── */
 function RunPanel({ name, onClose }: { name: string; onClose: () => void }) {
-  const [lines, setLines] = useState<string[]>([]);
+  const [logLines, setLogLines] = useState<LogLine[]>([]);
+  const [result, setResult] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
-  const [done, setDone] = useState(false);
+  const stdoutBuf = useRef('');
+  const logEndRef = useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [logLines]);
 
   const handleRun = async () => {
-    setLines([]);
-    setDone(false);
+    setLogLines([]);
+    setResult(null);
+    stdoutBuf.current = '';
     setRunning(true);
     const res = await fetch(`/api/pipelines/${name}/run`, { method: 'POST' });
     if (!res.body) { setRunning(false); return; }
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
-    while (true) {
+    let finished = false;
+    while (!finished) {
       const { done: d, value } = await reader.read();
       if (d) break;
-      const text = decoder.decode(value);
-      for (const event of text.split('\n\n').filter(Boolean)) {
+      for (const event of decoder.decode(value).split('\n\n').filter(Boolean)) {
         const data = event.replace(/^data: /, '');
         try {
           const parsed = JSON.parse(data);
-          if (parsed.done) { setDone(true); break; }
-          if (parsed.error) setLines(l => [...l, `ERROR: ${parsed.error}`]);
-          else setLines(l => [...l, data]);
-        } catch { if (data.trim()) setLines(l => [...l, data]); }
+          if (parsed.done) { finished = true; break; }
+          if ('error' in parsed) {
+            for (const line of (parsed.error as string).split('\n').filter((l: string) => l.trim())) {
+              const m = line.match(/^(\d{4}\/\d{2}\/\d{2} )(\d{2}:\d{2}:\d{2}) \[executor\] (.+)$/);
+              if (m) setLogLines(l => [...l, { kind: 'executor', time: m[2], msg: m[3] }]);
+              else setLogLines(l => [...l, { kind: 'info', msg: line }]);
+            }
+          }
+        } catch {
+          stdoutBuf.current += data;
+          const jsonStart = stdoutBuf.current.indexOf('\n{');
+          if (jsonStart !== -1) {
+            try {
+              const r = JSON.parse(stdoutBuf.current.slice(jsonStart).trim()) as RunResult;
+              if ('success' in r && Array.isArray(r.nodeResults)) setResult(r);
+            } catch { /* incomplete chunk */ }
+          }
+        }
       }
     }
     setRunning(false);
-    setDone(true);
   };
 
   return (
-    <div className="border-t flex flex-col gap-2 p-3 bg-slate-950 text-green-400 font-mono text-xs">
-      <div className="flex items-center justify-between">
-        <span className="text-slate-400">Run: {name}</span>
-        <div className="flex gap-2">
+    <div className="border-t flex flex-col bg-slate-950 font-mono text-xs max-h-64">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800 shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="text-slate-400">Run:</span>
+          <span className="text-slate-200 font-semibold">{name}</span>
+          {result && (
+            <span className={result.success ? 'text-green-400 font-semibold' : 'text-red-400 font-semibold'}>
+              {result.success ? '✓' : '✗'} {fmtMs(result.durationMs)}
+            </span>
+          )}
+        </div>
+        <div className="flex gap-2 items-center">
           <Button size="sm" variant="outline" className="h-6 text-xs border-slate-700 text-green-400 hover:text-green-300" onClick={handleRun} disabled={running}>
             {running ? <RefreshCw size={11} className="animate-spin mr-1" /> : <Play size={11} className="mr-1" />}
-            {running ? 'Running...' : 'Run'}
+            {running ? 'Running…' : result ? 'Re-run' : 'Run'}
           </Button>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 text-xs">✕</button>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-300">✕</button>
         </div>
       </div>
-      {lines.length > 0 && (
-        <div className="max-h-48 overflow-y-auto flex flex-col gap-0.5">
-          {lines.map((l, i) => <div key={i}>{l}</div>)}
-          {done && <div className="text-slate-400 mt-1">— done —</div>}
-        </div>
-      )}
+
+      <div className="flex-1 overflow-y-auto">
+        {logLines.length > 0 && (
+          <div className="flex flex-col px-3 py-2 gap-0.5">
+            {logLines.map((l, i) => (
+              <div key={i} className="flex items-start gap-2">
+                {l.kind === 'executor' && (
+                  <>
+                    <span className="text-slate-600 shrink-0">{l.time}</span>
+                    <span className="text-slate-300">{l.msg}</span>
+                  </>
+                )}
+                {l.kind === 'info' && <span className="text-slate-400">{l.msg}</span>}
+                {l.kind === 'err' && <span className="text-red-400">{l.msg}</span>}
+              </div>
+            ))}
+            <div ref={logEndRef} />
+          </div>
+        )}
+
+        {result && (
+          <div className="px-3 pb-2">
+            <table className="w-full text-[11px] border border-slate-800 rounded overflow-hidden">
+              <thead>
+                <tr className="border-b border-slate-800 text-slate-500">
+                  <th className="text-left px-2 py-1 font-normal">node</th>
+                  <th className="text-left px-2 py-1 font-normal">type</th>
+                  <th className="text-right px-2 py-1 font-normal">duration</th>
+                  <th className="text-left px-2 py-1 font-normal">output</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.nodeResults.map(n => (
+                  <tr key={n.nodeId} className="border-b border-slate-800 last:border-0">
+                    <td className="px-2 py-1.5 text-slate-200 max-w-[100px] truncate">{n.label}</td>
+                    <td className="px-2 py-1.5">
+                      <span className="px-1 py-0.5 rounded bg-slate-800 text-slate-400">{n.nodeType}</span>
+                    </td>
+                    <td className="px-2 py-1.5 text-right text-slate-400 whitespace-nowrap">{fmtNs(n.durationMs)}</td>
+                    <td className="px-2 py-1.5 text-slate-300 max-w-[200px] truncate" title={n.output ?? n.error}>
+                      {n.output ?? n.error ?? '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {!running && !result && logLines.length === 0 && (
+          <div className="px-3 py-4 text-slate-600 text-center">Press Run to execute the pipeline.</div>
+        )}
+      </div>
     </div>
   );
 }
 
 /* ── Logs panel ── */
 function LogsPanel({ name, onClose }: { name: string; onClose: () => void }) {
-  const { data, isLoading, refetch } = usePipelineLogsQuery(name);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const { data: listData, isLoading: listLoading, refetch } = usePipelineLogsQuery(name);
+  const { data: detailData, isLoading: detailLoading } = useQuery({
+    queryKey: ['pipelines', 'logs', name, selectedRunId],
+    queryFn: () => fetch(`/api/pipelines/${name}/logs?runId=${selectedRunId}`).then(r => r.json()) as Promise<{ output: string }>,
+    enabled: !!selectedRunId,
+  });
+
+  const runs = listData?.output ? parseRunList(listData.output) : [];
+  const detail = detailData?.output ? parseRunDetail(detailData.output) : null;
+
   return (
-    <div className="border-t flex flex-col gap-2 p-3 bg-slate-950 text-slate-300 font-mono text-xs max-h-64 overflow-y-auto">
-      <div className="flex items-center justify-between">
-        <span className="text-slate-400">Logs: {name}</span>
-        <div className="flex gap-2">
-          <button onClick={() => refetch()} className="text-slate-500 hover:text-slate-300 text-xs">↺</button>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 text-xs">✕</button>
+    <div className="border-t flex flex-col bg-slate-950 font-mono text-xs max-h-64">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800 shrink-0">
+        <div className="flex items-center gap-1.5">
+          {selectedRunId && (
+            <button onClick={() => setSelectedRunId(null)} className="text-slate-500 hover:text-slate-200 mr-1">←</button>
+          )}
+          <span className="text-slate-400">Logs:</span>
+          <span className="text-slate-200 font-semibold">{name}</span>
+          {selectedRunId && <span className="text-slate-600 text-[10px]">{selectedRunId.slice(0, 8)}…</span>}
+        </div>
+        <div className="flex gap-2 items-center">
+          {!selectedRunId && (
+            <button onClick={() => refetch()} className="text-slate-500 hover:text-slate-300">↺</button>
+          )}
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-300">✕</button>
         </div>
       </div>
-      {isLoading && <span className="text-slate-500">Loading...</span>}
-      {data?.output && <pre className="whitespace-pre-wrap text-[11px]">{data.output}</pre>}
+
+      <div className="flex-1 overflow-y-auto">
+        {!selectedRunId && (
+          <>
+            {listLoading && <div className="px-3 py-4 text-slate-600 text-center">Loading…</div>}
+            {!listLoading && runs.length === 0 && (
+              <div className="px-3 py-4 text-slate-600 text-center">No runs yet.</div>
+            )}
+            {runs.length > 0 && (
+              <table className="w-full text-[11px]">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-500">
+                    <th className="text-left px-3 py-1 font-normal">started</th>
+                    <th className="text-left px-3 py-1 font-normal">state</th>
+                    <th className="text-right px-3 py-1 font-normal">duration</th>
+                    <th className="text-right px-3 py-1 font-normal">run id</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {runs.map(r => (
+                    <tr
+                      key={r.id}
+                      onClick={() => setSelectedRunId(r.id)}
+                      className="border-b border-slate-800 last:border-0 cursor-pointer hover:bg-slate-900 transition-colors"
+                    >
+                      <td className="px-3 py-1.5 text-slate-300">{r.startedAt}</td>
+                      <td className="px-3 py-1.5">
+                        <span className={r.state === 'success' ? 'text-green-400' : 'text-red-400'}>
+                          {r.state === 'success' ? '✓' : '✗'} {r.state}
+                        </span>
+                      </td>
+                      <td className="px-3 py-1.5 text-right text-slate-400">{fmtDurationStr(r.duration)}</td>
+                      <td className="px-3 py-1.5 text-right text-slate-600 text-[10px]">{r.id.slice(0, 8)}…</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
+        )}
+
+        {selectedRunId && (
+          <>
+            {detailLoading && <div className="px-3 py-4 text-slate-600 text-center">Loading…</div>}
+            {detail && (
+              <>
+                <div className="flex items-center gap-3 px-3 py-2 border-b border-slate-800 text-[11px] shrink-0">
+                  <span className={detail.state === 'success' ? 'text-green-400 font-semibold' : 'text-red-400 font-semibold'}>
+                    {detail.state === 'success' ? '✓' : '✗'} {detail.state}
+                  </span>
+                  <span className="text-slate-500">{detail.trigger}</span>
+                  <span className="text-slate-400">{detail.started}</span>
+                  <span className="text-slate-400 ml-auto">{fmtDurationStr(detail.duration)}</span>
+                </div>
+                <table className="w-full text-[11px]">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-500">
+                      <th className="text-left px-3 py-1 font-normal">node</th>
+                      <th className="text-left px-3 py-1 font-normal">type</th>
+                      <th className="text-right px-3 py-1 font-normal">duration</th>
+                      <th className="text-left px-3 py-1 font-normal">output</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detail.nodes.map((n, i) => (
+                      <tr key={i} className="border-b border-slate-800 last:border-0">
+                        <td className="px-3 py-1.5 text-slate-200 max-w-[100px] truncate">{n.label}</td>
+                        <td className="px-3 py-1.5">
+                          <span className="px-1 py-0.5 rounded bg-slate-800 text-slate-400">{n.type}</span>
+                        </td>
+                        <td className="px-3 py-1.5 text-right text-slate-400 whitespace-nowrap">{fmtDurationStr(n.duration)}</td>
+                        <td className="px-3 py-1.5 text-slate-300 max-w-[200px] truncate" title={n.output}>{n.output || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
