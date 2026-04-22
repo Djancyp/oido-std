@@ -55,7 +55,7 @@ function ScheduleModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-background border rounded-lg shadow-lg w-full max-w-md p-6 space-y-4">
+      <div className="bg-background border rounded-lg shadow-lg w-[calc(100vw-2rem)] max-w-md p-4 md:p-6 space-y-4 mx-4">
         <h2 className="text-lg font-semibold">{isEdit ? 'Edit Schedule' : 'Add Schedule'}</h2>
         {isEdit && (
           <p className="text-xs text-muted-foreground">
@@ -130,8 +130,8 @@ export function SchedulesClient({ initialSchedules, pipelines }: Props) {
           <p className="text-sm">No schedules configured</p>
         </div>
       ) : (
-        <div className="rounded-lg border overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="rounded-lg border overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead className="bg-muted/50 text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 text-left font-medium">ID</th>
@@ -167,7 +167,7 @@ export function SchedulesClient({ initialSchedules, pipelines }: Props) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7"
+                        className="h-8 w-8"
                         onClick={() => setEditing(s)}
                       >
                         <Pencil size={14} />

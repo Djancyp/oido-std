@@ -47,10 +47,10 @@ function ServerCard({ server }: { server: McpServer }) {
           }
         </div>
         <div className="flex items-center gap-1 shrink-0 ml-2">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(v => !v)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setExpanded(v => !v)}>
             {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleToggle} disabled={isPending}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleToggle} disabled={isPending}>
             {server.enabled ? <ToggleRight size={15} className="text-green-600" /> : <ToggleLeft size={15} className="text-muted-foreground" />}
           </Button>
           <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={handleRemove} disabled={remove.isPending}>

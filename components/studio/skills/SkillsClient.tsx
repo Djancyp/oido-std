@@ -122,9 +122,9 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
 
   /* ── Render ── */
   return (
-    <div className="flex flex-col h-screen bg-background text-foreground">
+    <div className="flex flex-col h-dvh bg-background text-foreground">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b bg-muted/10 shrink-0">
+      <header className="flex items-center justify-between gap-3 flex-wrap px-4 md:px-6 py-4 border-b bg-muted/10 shrink-0">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push('/studio')}>
             <ChevronLeft size={20} />
@@ -142,8 +142,8 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* ── Left panel: list ── */}
-        <div className="w-72 shrink-0 border-r flex flex-col">
+        {/* ── Left panel: list — hidden on mobile when a skill is selected ── */}
+        <div className={`w-full md:w-72 shrink-0 border-r flex flex-col ${selected || mode !== 'view' ? 'hidden md:flex' : 'flex'}`}>
           <div className="p-3 border-b">
             <div className="relative">
               <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -194,7 +194,14 @@ export function SkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
         </div>
 
         {/* ── Right panel: detail / editor ── */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className={`flex-1 flex flex-col overflow-hidden ${!selected && mode === 'view' ? 'hidden md:flex' : 'flex'}`}>
+          {/* Mobile back button */}
+          <div className="md:hidden flex items-center px-3 py-2 border-b shrink-0">
+            <Button variant="ghost" size="sm" className="gap-1 h-8 text-xs" onClick={() => { setSelected(null); setMode('view'); }}>
+              <ChevronLeft size={14} /> Back
+            </Button>
+          </div>
+
           {mode === 'view' && !selected && (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
               <BookOpen size={40} className="opacity-20" />

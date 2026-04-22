@@ -94,10 +94,10 @@ function ChannelCard({ channel, onEdit }: { channel: Channel; onEdit: (ch: Chann
         </div>
 
         <div className="flex items-center gap-1 shrink-0 ml-2">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(v => !v)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setExpanded(v => !v)}>
             {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(channel)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(channel)}>
             <Pencil size={13} />
           </Button>
           <Button

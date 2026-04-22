@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { AppSidebar } from '@/components/studio/sidebar';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { ModelProvider } from '@/contexts/Models';
 import { AgentsProvider } from '@/contexts/Agents';
 import { ToolsProvider } from '@/contexts/Tools';
@@ -40,6 +40,9 @@ export default async function StudioLayout({ children }: { children: React.React
             <SidebarProvider>
               <AppSidebar />
               <SidebarInset>
+                <div className="md:hidden flex items-center px-3 py-2 border-b">
+                  <SidebarTrigger />
+                </div>
                 <main className="flex flex-1 flex-col gap-4 md:gap-8">{children}</main>
               </SidebarInset>
             </SidebarProvider>

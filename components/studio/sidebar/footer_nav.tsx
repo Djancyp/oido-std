@@ -26,7 +26,7 @@ function FooterNav({
   useEffect(() => setMounted(true), []);
   return (
     <>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
+      <div className="flex items-center gap-2 py-2 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link
           href="/studio/providers"
           className="flex w-full gap-2"
@@ -35,43 +35,43 @@ function FooterNav({
           <span className="text-sm">Providers</span>
         </Link>
       </div>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
+      <div className="flex items-center gap-2 py-2 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/channels" className="flex w-full gap-2">
           <Cable size={18} />
           <span className="text-sm">Channels</span>
         </Link>
       </div>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
+      <div className="flex items-center gap-2 py-2 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/extensions" className="flex w-full gap-2">
           <Blocks size={18} />
           <span className="text-sm">Extensions</span>
         </Link>
       </div>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
+      <div className="flex items-center gap-2 py-2 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/mcp" className="flex w-full gap-2">
           <Unplug size={18} />
           <span className="text-sm">MCP</span>
         </Link>
       </div>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
+      <div className="flex items-center gap-2 py-2 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/skills" className="flex gap-2 w-full">
           <Command size={18} />
           <span className="text-sm">Skills</span>
         </Link>
       </div>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
+      <div className="flex items-center gap-2 py-2 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/pipelines" className="flex gap-2 w-full">
           <Workflow size={18} />
           <span className="text-sm">Pipelines</span>
         </Link>
       </div>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
+      <div className="flex items-center gap-2 py-2 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/pipelines/schedule" className="flex gap-2 w-full">
           <Calendar size={18} />
           <span className="text-sm">Cron Jobs</span>
         </Link>
       </div>
-      <div className="flex items-center gap-2 py-1.5 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
+      <div className="flex items-center gap-2 py-2 cursor-pointer group hover:bg-sidebar-accent rounded transition-colors border border-transparent active:border-border">
         <Link href="/studio/teams" className="flex gap-2 w-full">
           <Users size={18} />
           <span className="text-sm">Team</span>

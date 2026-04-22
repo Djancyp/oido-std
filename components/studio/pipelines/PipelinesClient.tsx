@@ -632,13 +632,24 @@ export function PipelineDetail({
         </div>
 
         {selectedNode && (
-          <div className="w-64 shrink-0 border-l flex flex-col">
-            <NodeConfigPanel
-              node={selectedNode}
-              onChange={handleNodeChange}
-              onClose={() => setSelectedNode(null)}
-            />
-          </div>
+          <>
+            {/* Desktop: side panel */}
+            <div className="hidden md:flex w-64 shrink-0 border-l flex-col">
+              <NodeConfigPanel
+                node={selectedNode}
+                onChange={handleNodeChange}
+                onClose={() => setSelectedNode(null)}
+              />
+            </div>
+            {/* Mobile: bottom sheet */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t max-h-[50vh] overflow-y-auto">
+              <NodeConfigPanel
+                node={selectedNode}
+                onChange={handleNodeChange}
+                onClose={() => setSelectedNode(null)}
+              />
+            </div>
+          </>
         )}
       </div>
     </div>

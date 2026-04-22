@@ -634,7 +634,7 @@ export function ChatWindow() {
   };
   if (!agentInfo) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
+      <div className="flex h-dvh w-full flex-col items-center justify-center bg-background">
         <div className="text-center animate-in fade-in zoom-in duration-300">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
             <Bot className="text-muted-foreground" size={24} />
@@ -648,7 +648,7 @@ export function ChatWindow() {
     );
   }
   return (
-    <Card className="h-screen flex flex-col rounded-none border-none shadow-none p-0">
+    <Card className="h-dvh flex flex-col rounded-none border-none shadow-none p-0">
       <TopBar
         sessions={sessions}
         removeTab={removeTab}
@@ -658,37 +658,37 @@ export function ChatWindow() {
         agentInfo={agentInfo}
       />
 
-      <ScrollArea className="flex-1 px-4 min-h-0">
-        <div className="max-w-7xl mx-auto space-y-8">
+      <ScrollArea className="flex-1 px-2 md:px-4 min-h-0">
+        <div className="max-w-3xl mx-auto space-y-3 md:space-y-6 py-3 md:py-4">
           {activeSession.messages.map((msg, index) => (
             <div
               key={`${index}-${msg.id}-${msg.content}`}
-              className={cn('flex gap-4', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}
+              className={cn('flex gap-2 md:gap-4', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}
             >
-              <Avatar className="h-9 w-9 border shrink-0">
+              <Avatar className="hidden md:flex h-8 w-8 border shrink-0">
                 <AvatarFallback
                   className={
                     msg.role === 'user' ? 'bg-muted' : 'bg-primary text-primary-foreground'
                   }
                 >
-                  {msg.role === 'user' ? <User size={18} /> : <Bot size={18} />}
+                  {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
                 </AvatarFallback>
               </Avatar>
               <div
                 className={cn(
-                  'flex flex-col gap-1 w-full',
-                  msg.role === 'user' ? 'items-end' : 'items-start'
+                  'flex flex-col gap-1 min-w-0',
+                  msg.role === 'user' ? 'items-end max-w-[85%] ml-auto' : 'items-start w-full'
                 )}
               >
                 {msg.role === 'user' ? (
-                  <div className="bg-primary text-primary-foreground px-4 py-2 rounded-2xl rounded-tr-none text-sm shadow-sm">
+                  <div className="bg-primary text-primary-foreground px-3 py-2 md:px-4 rounded-2xl rounded-tr-none text-sm shadow-sm break-words">
                     {msg.content}
                   </div>
                 ) : (
                   <AssistantBubble msg={msg} onAnswer={handleAnswer} />
                 )}
                 {msg.timestamp && (
-                  <span className="text-[10px] text-muted-foreground mt-1">{msg.timestamp}</span>
+                  <span className="text-[10px] text-muted-foreground mt-0.5">{msg.timestamp}</span>
                 )}
               </div>
             </div>
@@ -696,14 +696,14 @@ export function ChatWindow() {
 
           <div ref={bottomRef} />
           {isLoading && (
-            <div className="flex gap-4">
-              <Avatar className="h-9 w-9 border shrink-0">
+            <div className="flex gap-2 md:gap-4">
+              <Avatar className="hidden md:flex h-8 w-8 border shrink-0">
                 <AvatarFallback className="bg-primary text-primary-foreground">
-                  <Bot size={18} />
+                  <Bot size={16} />
                 </AvatarFallback>
               </Avatar>
-              <div className="flex items-center gap-2">
-                <Loader2 className="animate-spin" size={16} />
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="animate-spin" size={15} />
                 <span className="text-sm">Thinking...</span>
               </div>
             </div>
@@ -711,19 +711,19 @@ export function ChatWindow() {
         </div>
       </ScrollArea>
 
-      <CardFooter className="border-t p-4 bg-muted/10 shrink-0">
-        <div className="flex w-full max-w-3xl mx-auto items-end gap-3">
+      <CardFooter className="border-t p-2 md:p-4 bg-muted/10 shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="flex w-full max-w-3xl mx-auto items-end gap-2">
           <textarea
             ref={textareaRef}
-            placeholder="Ready for next command..."
-            className="flex-1 min-h-[48px] resize-none bg-background rounded-xl shadow-inner border border-muted-foreground/20 px-3 py-3 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+            placeholder="Message..."
+            className="flex-1 min-h-[44px] resize-none bg-background rounded-2xl shadow-inner border border-muted-foreground/20 px-3 py-2.5 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
             value={inputValue}
             rows={1}
-            style={{ height: '48px' }}
+            style={{ height: '44px' }}
             onChange={e => {
               setInputValue(e.target.value);
-              e.target.style.height = '48px';
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 84)}px`;
+              e.target.style.height = '44px';
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
             }}
             onKeyDown={handleKeyPress}
             disabled={isLoading}
@@ -732,19 +732,19 @@ export function ChatWindow() {
             <Button
               size="icon"
               variant="destructive"
-              className="h-12 w-12 rounded-xl active:scale-95 transition-transform shrink-0"
+              className="h-11 w-11 rounded-2xl active:scale-95 transition-transform shrink-0"
               onClick={handleStop}
             >
-              <Square size={16} fill="currentColor" />
+              <Square size={15} fill="currentColor" />
             </Button>
           ) : (
             <Button
               size="icon"
-              className="h-12 w-12 rounded-xl active:scale-95 transition-transform shrink-0"
+              className="h-11 w-11 rounded-2xl active:scale-95 transition-transform shrink-0"
               onClick={handleSendMessage}
               disabled={!inputValue.trim()}
             >
-              <Send size={20} />
+              <Send size={18} />
             </Button>
           )}
         </div>

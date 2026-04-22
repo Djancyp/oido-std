@@ -90,9 +90,9 @@ export function ExtensionsClient({ initialExtensions }: Props) {
     (uninstall.isPending && uninstall.variables === name);
 
   return (
-    <div className="flex flex-col h-screen bg-background text-foreground">
+    <div className="flex flex-col h-dvh bg-background text-foreground">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b bg-muted/10">
+      <header className="flex items-center justify-between gap-3 flex-wrap px-4 md:px-6 py-4 border-b bg-muted/10">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push('/studio')}>
             <ChevronLeft size={20} />
