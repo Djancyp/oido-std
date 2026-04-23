@@ -343,17 +343,59 @@ export function ChatWindow() {
             });
 
         if (Array.isArray(data?.conversation)) {
-          const messages: ChatMessage[] = data.conversation.map((conv: any, i: number) => ({
-            id: `${conv.sessionId || 'msg'}-${i}`,
-            role: conv.role || conv.type,
-            content: conv.content || conv.text || '',
-            timestamp: conv.timestamp
-              ? new Date(conv.timestamp).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
-              : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          }));
+          const messages: ChatMessage[] = [];
+
+          for (let i = 0; i < data.conversation.length; i++) {
+            const conv = data.conversation[i];
+            const role: 'user' | 'assistant' = conv.type === 'user' ? 'user' : 'assistant';
+            const contentArr: any[] = conv.message?.content ?? [];
+
+            // Extract proper thinking blocks
+            const thinkingText = contentArr
+              .filter((c: any) => c.type === 'thinking')
+              .map((c: any) => c.thinking ?? '')
+              .join('');
+
+            let rawText = contentArr
+              .filter((c: any) => c.type === 'text')
+              .map((c: any) => c.text ?? '')
+              .join('');
+
+            // Strip leaked <thinking>...</thinking> XML from text, capture as thinking
+            let leakedThinking = '';
+            rawText = rawText.replace(/<thinking>([\s\S]*?)<\/thinking>/g, (_: string, inner: string) => {
+              leakedThinking += inner.trim() + '\n';
+              return '';
+            }).trim();
+
+            const thinking = (thinkingText || leakedThinking).trim() || undefined;
+
+            // Strip [Tool: ask_user_question] prefix from user messages
+            let displayContent = rawText;
+            if (role === 'user') {
+              displayContent = rawText.replace(
+                /^\[Tool: ask_user_question\] User answered:\s*"?([\s\S]*?)"?\s*$/,
+                '$1'
+              ).trim();
+            }
+
+            // Skip messages with no visible content and no thinking
+            if (!displayContent && !thinking) continue;
+
+            messages.push({
+              id: `${conv.sessionId || 'msg'}-${i}`,
+              role,
+              content: displayContent,
+              thinking,
+              timestamp: conv.timestamp
+                ? new Date(conv.timestamp).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            });
+          }
+
           setSessions(prev => prev.map(s => (s.id === tabId ? { ...s, messages } : s)));
         }
       } catch (err) {
