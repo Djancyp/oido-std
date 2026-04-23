@@ -12,6 +12,15 @@ export async function runCmd(cmd: string) {
   return stdout;
 }
 
+async function runArgs(bin: string, args: string[]): Promise<string> {
+  const { execFile } = await import('child_process');
+  const { promisify } = await import('util');
+  const execFileAsync = promisify(execFile);
+
+  const { stdout } = await execFileAsync(bin, args);
+  return stdout;
+}
+
 /* =========================
    Types
 ========================= */
@@ -85,16 +94,15 @@ export async function POST(req: NextRequest) {
     }
 
     const args = [
-      `${oido} agents add ${body.name}`,
+      'agents', 'add', body.name,
       ...buildFlags('skills', body.skills),
       ...buildFlags('exclude-tools', body.exclude_tools),
       ...buildFlags('subagent', body.subagents),
-      ...(body.system_prompt ? [`--system-prompt "${body.system_prompt.replace(/"/g, '\\"')}"`] : []),
-      ...(body.model ? [`--model "${body.model}"`] : []),
+      ...(body.system_prompt ? ['--system-prompt', body.system_prompt] : []),
+      ...(body.model ? ['--model', body.model] : []),
     ];
 
-    const command = args.join(' ');
-    const stdout = await runCmd(command);
+    const stdout = await runArgs(oido, args);
 
     return NextResponse.json({
       success: true,
@@ -135,20 +143,18 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (body.system_prompt) {
-      flags.push(`--system-prompt "${body.system_prompt.replace(/"/g, '\\"')}"`);
+      flags.push('--system-prompt', body.system_prompt);
     } else if (body.clear_system_prompt) {
       flags.push('--clear-system-prompt');
     }
 
     if (body.model) {
-      flags.push(`--model "${body.model}"`);
+      flags.push('--model', body.model);
     } else if (body.clear_model) {
       flags.push('--clear-model');
     }
 
-    const command = [`${oido} agents update ${body.name}`, ...flags].join(' ');
-
-    const stdout = await runCmd(command);
+    const stdout = await runArgs(oido, ['agents', 'update', body.name, ...flags]);
 
     return NextResponse.json({
       success: true,
