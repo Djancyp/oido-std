@@ -229,19 +229,20 @@ export async function POST(req: NextRequest) {
             safeClose();
             child.kill();
             break;
-					
-					case 'error':
-						console.log('[stream] error:', msg.error);
-						send({
-							type: 'done',
-							conversation_id: conversationId,
-							is_error: true,
-							num_turns: msg.num_turns ?? 0,
-							duration_ms: msg.duration_ms ?? 0,
-						});
-						safeClose();
-						child.kill();
-						break;
+
+          case 'error':
+            console.log('[stream] error:', msg);
+            send({
+              type: 'error',
+              message: msg.message,
+              conversation_id: conversationId,
+              is_error: true,
+              num_turns: msg.num_turns ?? 0,
+              duration_ms: msg.duration_ms ?? 0,
+            });
+            safeClose();
+            child.kill();
+            break;
 
           default:
             console.log('[stream] unhandled type:', msg.type);
