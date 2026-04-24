@@ -62,7 +62,7 @@ COPY --from=builder --chown=node:node /app/node_modules ./node_modules
 RUN mkdir -p /app/data && chown node:node /app/data
 
 # Switch to the pre-existing node user
-USER node
+# USER node
 
 EXPOSE 3000
 
@@ -71,4 +71,4 @@ ENV HOSTNAME=0.0.0.0
 ENV OIDO_PATH=/usr/local/bin/oido
 
 # 5. Execute migration and start server
-CMD ["sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema.prisma && node server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema.prisma && yarn start"]

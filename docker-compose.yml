@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
       args:
         OIDO_BINARY: ./oido
+        USER_ID: ${UID:-1000}
+        GROUP_ID: ${GID:-1000}
     image: oido-std:latest
     container_name: oido-std
     restart: unless-stopped
@@ -13,7 +15,7 @@ services:
     environment:
       - AGENT_WORKDIR=/home/node
     volumes:
-      - app-data:/app/data
+      - ./data:/app/data
       - /usr/local/bin/oido:/usr/local/bin/oido
       - /home/djan/.config/oido:/home/node/.config/oido:rw
       - /home/djan/.cache/oido:/home/node/.cache/oido:rw
@@ -32,8 +34,3 @@ services:
 networks:
   traefik_proxy:
     external: true
-
-volumes:
-  app-data:
-  oido-config:
-  oido-cache:
