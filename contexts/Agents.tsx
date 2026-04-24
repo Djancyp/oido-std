@@ -201,12 +201,8 @@ export function AgentsProvider({
   // Seed tabs from agent.tab_ids and load full tab data
   useEffect(() => {
     if (!data) return;
-    console.log('[tabs] data agents:', data.map(a => ({ id: a.agent_id, tab_ids: a.tab_ids })));
-    console.log('[tabs] loadedAgentIds:', [...loadedAgentIds.current]);
-    console.log('[tabs] current tabs state:', tabs.map(t => ({ id: t.id, agentId: t.agentId, name: t.name })));
     for (const agent of data) {
       if (loadedAgentIds.current.has(agent.agent_id)) {
-        console.log(`[tabs] skip agent ${agent.agent_id} (already loaded)`);
         continue;
       }
       loadedAgentIds.current.add(agent.agent_id);
@@ -215,7 +211,6 @@ export function AgentsProvider({
         const seedTabs = agent.tab_ids.map((tid: string, i: number) =>
           makeTab(agent.agent_id, `Tab ${i + 1}`, tid)
         );
-        console.log(`[tabs] seeding ${seedTabs.length} tabs for agent ${agent.agent_id}:`, seedTabs.map(t => t.id));
         setTabs(prev => [...prev.filter(t => t.agentId !== agent.agent_id), ...seedTabs]);
       }
 

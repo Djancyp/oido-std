@@ -13,7 +13,6 @@ type CreateAgentButtonProps = {
 
 export const CreateAgentModal = ({ handleCreateAgent }: CreateAgentButtonProps) => {
 	const {models} = useModels();
-	console.log(models)
   const { openModal, closeModal } = useModal();
   const [name, setName] = useState('');
 

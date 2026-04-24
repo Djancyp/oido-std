@@ -528,7 +528,6 @@ export function ChatWindow() {
         }),
       });
 
-			console.log(res)
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const reader = res.body?.getReader();
       if (!reader) throw new Error('no reader');

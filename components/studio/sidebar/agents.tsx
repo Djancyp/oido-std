@@ -112,9 +112,6 @@ export function Agents({ initialAgents = [] }: { initialAgents?: Agent[] }) {
     setAgents(current => [...current, createNewAgent('New Root Agent')]);
   }, []);
 
-  const searchChange = (value: string) => {
-    console.log(value);
-  };
   return (
     <SidebarGroup>
       <SidebarGroupLabel className="flex items-center justify-between px-2 mb-2">

@@ -66,8 +66,6 @@ export async function POST(req: NextRequest) {
       if (body.excludeTools?.length) {
         for (const tool of body.excludeTools) args.push('--no-tool', tool);
       }
-      console.log('[DEBUG][ARGS] ', body.systemPrompt);
-
       const oido = process.env.OIDO_PATH || 'oido';
       const child = pty.spawn(oido, args, {
         name: 'xterm-256color',
