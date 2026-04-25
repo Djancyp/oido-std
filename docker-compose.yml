@@ -22,15 +22,58 @@ services:
       - /home/djan/.local/share/oido:/home/node/.local/share/oido:rw
       - /home/djan/.ssh:/home/node/.ssh:ro
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.oido.rule=Host(`oido.bruna-tech.com`)"
-      - "traefik.http.routers.oido.entrypoints=websecure"
-      - "traefik.http.routers.oido.tls.certResolver=myresolver"
-      - "traefik.http.services.oido.loadbalancer.server.port=3000"
-      - "traefik.http.routers.oido.priority=1"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.oido.rule=Host(`oido.bruna-tech.com`)'
+      - 'traefik.http.routers.oido.entrypoints=websecure'
+      - 'traefik.http.routers.oido.tls.certResolver=myresolver'
+      - 'traefik.http.services.oido.loadbalancer.server.port=3000'
+      - 'traefik.http.routers.oido.priority=1'
     networks:
       - traefik_proxy
+  n8n:
+    image: n8nio/n8n
+    environment:
+      # DB Configuration - using SQLite (default)
+      - DB_TYPE=sqlite
+      - DB_SQLITE_POOL_SIZE=2
+      # Security
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin
+      - WEBHOOK_TUNNEL_URL=https://n8n.localhost/
+      # File permissions
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      # Additional configuration for proper URL generation
+      - N8N_PATH_PREFIX=/
+      # New settings to address deprecation warnings
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+    command: 'start --tunnel'
+    ports:
+      - 5678:5678
+    networks:
+      - traefik_proxy
+    labels:
+      - 'traefik.enable=true'
+      # HTTP router
+      - 'traefik.http.routers.n8n-http.rule=Host(`n8n.bruna-tech`)'
+      - 'traefik.http.routers.n8n-http.entrypoints=web'
+      - 'traefik.http.routers.n8n-http.service=n8n'
+      # HTTPS router with TLS
+      - 'traefik.http.routers.n8n-https.rule=Host(`n8n.bruna-tech`)'
+      - 'traefik.http.routers.n8n-https.entrypoints=websecure'
+      - 'traefik.http.routers.n8n-https.tls=true'
+      - 'traefik.http.routers.n8n-https.tls.certresolver=myresolver'
+      - 'traefik.http.routers.n8n-https.service=n8n'
+      # Service configuration
+      - 'traefik.http.services.n8n.loadbalancer.server.port=5678'
 
 networks:
   traefik_proxy:
     external: true
+
+volumes:
+  n8n_data:

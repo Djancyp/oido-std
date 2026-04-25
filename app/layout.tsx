@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     default: 'Oido',
     template: '%s | Oido',
   },
-  description: 'Oido — AI agent studio for managing agents, pipelines, channels, and skills.',
+  description: 'Oido — AI agent studio for managing agents, channels, and skills.',
   robots: { index: false, follow: false },
 };
 

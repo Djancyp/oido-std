@@ -29,14 +29,18 @@ RUN yarn build
 FROM node:22-bookworm-slim AS runner
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 make g++ \
-    ca-certificates \
+    python3 \
+    make \
+    g++ \
     git \
-    ripgrep \
-    openssh-client \
-	 	curl \
- && update-ca-certificates \
+    curl \
+		ca-certificates \
+	  && update-ca-certificates \
  && rm -rf /var/lib/apt/lists/*
+RUN rm -rf /usr/local/go \
+ && curl -fsSL https://go.dev/dl/go1.22.5.linux-amd64.tar.gz -o go.tar.gz \
+ && tar -C /usr/local -xzf go.tar.gz \
+ && rm go.tar.gz
  
 WORKDIR /app
 

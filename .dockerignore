@@ -9,3 +9,4 @@ Dockerfile
 prisma/dev.db
 prisma/*.db
 data/
+./docker-compose-override.yml

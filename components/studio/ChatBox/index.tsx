@@ -604,6 +604,16 @@ export function ChatWindow() {
               });
             }
 
+            if (data.type === 'context_reset') {
+              setCurrentSessionId(null);
+              appendMessage({
+                id: generateId(),
+                role: 'system',
+                content: 'Session was too long for this model — started a fresh context.',
+                timestamp: generateTimestamp(),
+              });
+            }
+
             if (data.type === 'error') {
               appendMessage({
                 id: generateId(),

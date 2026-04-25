@@ -1,6 +1,6 @@
 'use client';
 import { Avatar, AvatarFallback, AvatarBadge } from '@/components/ui/avatar';
-import { Blocks, Cable, Calendar, Command, Moon, Sun, Unplug, Workflow, Users, KeyRound, Kanban } from 'lucide-react';
+import { Blocks, Cable, Command, Moon, Sun, Unplug, Users, KeyRound, Kanban } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
@@ -28,8 +28,6 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/studio/extensions',         icon: Blocks,    label: 'Extensions' },
   { href: '/studio/mcp',                icon: Unplug,    label: 'MCP' },
   { href: '/studio/skills',             icon: Command,   label: 'Skills' },
-  { href: '/studio/pipelines',          icon: Workflow,  label: 'Pipelines' },
-  { href: '/studio/pipelines/schedule', icon: Calendar,  label: 'Cron Jobs' },
   { href: '/studio/projects',           icon: Kanban,    label: 'Projects' },
   { href: '/studio/teams',              icon: Users,     label: 'Team' },
 ];
