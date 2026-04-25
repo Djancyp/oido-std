@@ -59,11 +59,11 @@ services:
     labels:
       - 'traefik.enable=true'
       # HTTP router
-      - 'traefik.http.routers.n8n-http.rule=Host(`n8n.bruna-tech`)'
+      - 'traefik.http.routers.n8n-http.rule=Host(`n8n.bruna-tech.com`)'
       - 'traefik.http.routers.n8n-http.entrypoints=web'
       - 'traefik.http.routers.n8n-http.service=n8n'
       # HTTPS router with TLS
-      - 'traefik.http.routers.n8n-https.rule=Host(`n8n.bruna-tech`)'
+      - 'traefik.http.routers.n8n-https.rule=Host(`n8n.bruna-tech.com`)'
       - 'traefik.http.routers.n8n-https.entrypoints=websecure'
       - 'traefik.http.routers.n8n-https.tls=true'
       - 'traefik.http.routers.n8n-https.tls.certresolver=myresolver'
