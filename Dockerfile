@@ -42,6 +42,7 @@ RUN rm -rf /usr/local/go \
  && tar -C /usr/local -xzf go.tar.gz \
  && rm go.tar.gz
  
+ENV PATH="/usr/local/go/bin:${PATH}"
 WORKDIR /app
 
 ENV NODE_ENV=production
